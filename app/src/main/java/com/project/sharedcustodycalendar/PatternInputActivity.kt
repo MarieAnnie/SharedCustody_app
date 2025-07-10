@@ -1,6 +1,7 @@
 package com.project.sharedcustodycalendar
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -18,24 +19,46 @@ class PatternInputActivity : AppCompatActivity() {
     private lateinit var generateButton: Button
     private lateinit var calendarGrid: LinearLayout
     private lateinit var legendLayout: LinearLayout
+    private lateinit var saveButton: Button
+    private val cellViews = mutableListOf<TriangleToggleCell>()
 
     private var numberOfWeeks: Int = 0
-    private val schedule = MutableList(28) { 0 } // Default to parent 0
+    private val morningSchedule = MutableList(28) { 0 }  // color at start of day
+    private val eveningSchedule = MutableList(28) { 0 }  // color at end of day
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_pattern)
+
+        val titleTextView = findViewById<TextView>(R.id.titleTextView)
+        val activeChildName = FamilyDataHolder.familyData.activeChild?.childName ?: "Unknown"
+        titleTextView.text = "New Calendar for $activeChildName"
 
         weekCountInput = findViewById(R.id.weekCountInput)
         generateButton = findViewById(R.id.generateButton)
         calendarGrid = findViewById(R.id.calendarGrid)
         legendLayout = findViewById(R.id.legendLayout)
 
+        // Create and add the Save button programmatically below calendarGrid
+        saveButton = Button(this).apply {
+            text = "Save"
+            isEnabled = false // Disabled until a pattern is generated
+            setOnClickListener {
+                FamilyDataHolder.familyData.setSchedulePatternForActiveChild(eveningSchedule)
+
+                // Start CalendarActivity
+                startActivity(Intent(this@PatternInputActivity, CalendarActivity::class.java))
+                finish()
+            }
+        }
+        (calendarGrid.parent as LinearLayout).addView(saveButton)
+
         generateButton.setOnClickListener {
             numberOfWeeks = weekCountInput.text.toString().toIntOrNull() ?: 0
             if (numberOfWeeks in 1..4) {
                 drawLegend()
                 drawCalendarGrid()
+                saveButton.isEnabled = true
             } else {
                 Toast.makeText(this, "Please enter a number between 1 and 4", Toast.LENGTH_SHORT).show()
             }
@@ -44,7 +67,7 @@ class PatternInputActivity : AppCompatActivity() {
 
     private fun drawLegend() {
         legendLayout.removeAllViews()
-        val parents = FamilyDataHolder.familyData?.parents ?: return
+        val parents = FamilyDataHolder.familyData.activeChild?.parents ?: return
 
         parents.forEach { parent ->
             val item = TextView(this).apply {
@@ -59,7 +82,7 @@ class PatternInputActivity : AppCompatActivity() {
 
     private fun drawCalendarGrid() {
         calendarGrid.removeAllViews()
-        val parents = FamilyDataHolder.familyData?.parents ?: return
+        cellViews.clear()
 
         // Header Row
         val daysOfWeek = listOf("S", "M", "T", "W", "T", "F", "S")
@@ -77,10 +100,19 @@ class PatternInputActivity : AppCompatActivity() {
 
         // Calendar Cells
         for (row in 0 until numberOfWeeks) {
-            val weekRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            val weekRow = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+            }
             for (col in 0 until 7) {
                 val index = row * 7 + col
                 val cell = TriangleToggleCell(this, index)
+                val cellParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                cell.layoutParams = cellParams
+                cellViews.add(cell)
                 weekRow.addView(cell)
             }
             calendarGrid.addView(weekRow)
@@ -93,24 +125,30 @@ class PatternInputActivity : AppCompatActivity() {
 
         init {
             setOnClickListener {
-                schedule[index] = 1 - schedule[index] // Toggle between 0 and 1
-                val prevIndex = (index - 1 + numberOfWeeks * 7) % (numberOfWeeks * 7)
+                val totalDays = numberOfWeeks * 7
+                // Toggle evening of current day and morning of next day (wrap around)
+                val newValue = 1 - eveningSchedule[index]
+
+                // Toggle between parent 0 and parent 1
+                // Toggle based on current value
+                eveningSchedule[index] = newValue
+                morningSchedule[(index + 1) % totalDays] = newValue
+
+
                 invalidate()
-                findViewById<View>(index)?.invalidate()
-                findViewById<View>(prevIndex)?.invalidate()
+                cellViews.getOrNull((index + 1) % totalDays)?.invalidate()
             }
         }
 
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
-            val parents = FamilyDataHolder.familyData?.parents ?: return
+            val parents = FamilyDataHolder.familyData.activeChild?.parents ?: return
 
-            val prevIndex = (index - 1 + numberOfWeeks * 7) % (numberOfWeeks * 7)
-            val prevParent = schedule[prevIndex]
-            val currentParent = schedule[index]
+            val morningColor = Color.parseColor(parents[morningSchedule[index]].color)
+            val eveningColor = Color.parseColor(parents[eveningSchedule[index]].color)
 
-            paintTop.color = Color.parseColor(parents[prevParent].color)
-            paintBottom.color = Color.parseColor(parents[currentParent].color)
+            paintTop.color = morningColor
+            paintBottom.color = eveningColor
 
             val pathTop = Path().apply {
                 moveTo(0f, 0f)
@@ -128,11 +166,22 @@ class PatternInputActivity : AppCompatActivity() {
 
             canvas.drawPath(pathTop, paintTop)
             canvas.drawPath(pathBottom, paintBottom)
+
+            // Black border
+            canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), borderPaint)
         }
 
+
         override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-            val size = MeasureSpec.getSize(widthMeasureSpec) / 7
-            setMeasuredDimension(size, size)
+            // Let width be dictated by layout weights, so height = width for square
+            val widthSize = MeasureSpec.getSize(widthMeasureSpec)
+            setMeasuredDimension(widthSize, widthSize)
+        }
+
+        private val borderPaint = Paint().apply {
+            color = Color.BLACK
+            style = Paint.Style.STROKE
+            strokeWidth = 4f  // adjust thickness if needed
         }
     }
 }

@@ -12,7 +12,9 @@
         android:layout_height="wrap_content">
         <!--TODO: add Child name in the title-->
 
+        <!-- Title -->
         <TextView
+            android:id="@+id/titleTextView"
             android:text="New Calendar for"
             android:textStyle="bold"
             android:textSize="22sp"

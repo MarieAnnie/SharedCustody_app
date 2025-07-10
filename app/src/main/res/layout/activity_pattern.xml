@@ -12,6 +12,7 @@
 
         <!-- Title -->
         <TextView
+            android:id="@+id/titleTextView"
             android:text="New Calendar for"
             android:textStyle="bold"
             android:textSize="22sp"

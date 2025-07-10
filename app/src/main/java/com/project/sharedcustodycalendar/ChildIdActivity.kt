@@ -8,7 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.project.sharedcustodycalendar.objects.FamilyDataHolder
 
-class FamilyIdActivity :  AppCompatActivity() {
+class ChildIdActivity :  AppCompatActivity() {
 
     private lateinit var familyIdField: EditText
     private lateinit var continueButton: Button
@@ -17,7 +17,7 @@ class FamilyIdActivity :  AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_family_id)
+        setContentView(R.layout.activity_child_id)
 
         familyIdField = findViewById(R.id.family_id_input)
         continueButton = findViewById(R.id.family_id_button)
@@ -45,13 +45,12 @@ class FamilyIdActivity :  AppCompatActivity() {
 
         createNewCalendarButton.setOnClickListener {
             val childName = childNameField.text.toString().trim()
-            val currentData = FamilyDataHolder.familyData ?: FamilyDataHolder.FamilyData()
-            FamilyDataHolder.familyData = currentData.copy(childName = childName)
+            FamilyDataHolder.familyData.createNewChild(childName)
 
             if (childName.isNotEmpty()) {
 
                 Toast.makeText(this, "New calendar being created for $childName...", Toast.LENGTH_SHORT).show()
-                startActivity(Intent(this, ConfigNewCalendarActivity::class.java))
+                startActivity(Intent(this, SetParentsActivity::class.java))
 
             } else {
                 Toast.makeText(this, "Please enter a child Name.", Toast.LENGTH_SHORT).show()

@@ -36,7 +36,7 @@ class DashboardActivity : AppCompatActivity() {
 
         // Handle add button
         addChildButton.setOnClickListener {
-            startActivity(Intent(this, FamilyIdActivity::class.java))
+            startActivity(Intent(this, ChildIdActivity::class.java))
         }
 
         // Show the first child

@@ -36,10 +36,11 @@
             </intent-filter>
         </activity>
         <activity android:name=".LoginActivity" />
-        <activity android:name=".FamilyIdActivity" />
+        <activity android:name=".ChildIdActivity" />
         <activity android:name=".DashboardActivity" />
-        <activity android:name=".ConfigNewCalendarActivity" />
+        <activity android:name=".SetParentsActivity" />
         <activity android:name=".PatternInputActivity" />
+        <activity android:name=".CalendarActivity" />
 
     </application>
 

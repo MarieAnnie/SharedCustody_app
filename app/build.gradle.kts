@@ -64,4 +64,7 @@ dependencies {
 
     // Gson
     implementation("com.google.code.gson:gson:2.10.1")
+
+    // Firebase Realtime Database or Firestore dependencies, choose one:
+    implementation("com.google.firebase:firebase-database-ktx:20.3.1")       // Realtime Database
 }

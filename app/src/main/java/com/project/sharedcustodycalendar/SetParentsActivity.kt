@@ -6,13 +6,14 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.project.sharedcustodycalendar.objects.FamilyDataHolder
 
 import com.project.sharedcustodycalendar.objects.Parent
 
-class ConfigNewCalendarActivity :  AppCompatActivity() {
+class SetParentsActivity :  AppCompatActivity() {
 
     private lateinit var parent1NameField: EditText
     private lateinit var parent1ColorSpinner: Spinner
@@ -20,11 +21,13 @@ class ConfigNewCalendarActivity :  AppCompatActivity() {
     private lateinit var parent2ColorSpinner: Spinner
     private lateinit var continueButton: Button
 
-    private lateinit var parents: List<Parent>
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_config_new_calendar)
+        setContentView(R.layout.activity_set_parents)
+
+        val titleTextView = findViewById<TextView>(R.id.titleTextView)
+        val activeChildName = FamilyDataHolder.familyData.activeChild?.childName ?: "Unknown"
+        titleTextView.text = "New Calendar for $activeChildName"
 
         parent1NameField = findViewById(R.id.parent1Name)
         parent1ColorSpinner = findViewById(R.id.parent1Color)
@@ -65,8 +68,7 @@ class ConfigNewCalendarActivity :  AppCompatActivity() {
             val parent2 = Parent(parentName2, parentColor2)
 
             val parents = listOf(parent1, parent2)
-            val currentData = FamilyDataHolder.familyData ?: FamilyDataHolder.FamilyData()
-            FamilyDataHolder.familyData = currentData.copy(parents = parents)
+            FamilyDataHolder.familyData.setParentsForActiveChild(parents)
 
             startActivity(Intent(this, PatternInputActivity::class.java))
         }
