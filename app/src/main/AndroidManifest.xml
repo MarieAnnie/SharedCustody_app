@@ -39,6 +39,7 @@
         <activity android:name=".FamilyIdActivity" />
         <activity android:name=".DashboardActivity" />
         <activity android:name=".ConfigNewCalendarActivity" />
+        <activity android:name=".PatternInputActivity" />
 
     </application>
 

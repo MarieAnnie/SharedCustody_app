@@ -6,6 +6,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.project.sharedcustodycalendar.objects.FamilyDataHolder
 
 class FamilyIdActivity :  AppCompatActivity() {
 
@@ -44,6 +45,8 @@ class FamilyIdActivity :  AppCompatActivity() {
 
         createNewCalendarButton.setOnClickListener {
             val childName = childNameField.text.toString().trim()
+            val currentData = FamilyDataHolder.familyData ?: FamilyDataHolder.FamilyData()
+            FamilyDataHolder.familyData = currentData.copy(childName = childName)
 
             if (childName.isNotEmpty()) {
 

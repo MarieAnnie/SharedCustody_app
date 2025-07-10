@@ -10,6 +10,22 @@
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
+        <!--TODO: add Child name in the title-->
+
+        <TextView
+            android:text="New Calendar for"
+            android:textStyle="bold"
+            android:textSize="22sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:text="Let's configurate your shared custody calendar. First, add the parents
+and choose a different color for each parent. This color will be used to represent them on the calendar."
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp" />
 
         <!-- Parent 1 -->
         <TextView
