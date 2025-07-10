@@ -1,4 +1,7 @@
 package com.project.sharedcustodycalendar
 
-class CalendarActivity {
+import androidx.appcompat.app.AppCompatActivity
+
+class CalendarActivity :  AppCompatActivity() {
+
 }
