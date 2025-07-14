@@ -11,7 +11,9 @@ import android.view.View
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+
 import com.project.sharedcustodycalendar.objects.FamilyDataHolder
+import com.project.sharedcustodycalendar.utils.FirebaseUtils
 
 class PatternInputActivity : AppCompatActivity() {
 
@@ -44,7 +46,8 @@ class PatternInputActivity : AppCompatActivity() {
             text = "Save"
             isEnabled = false // Disabled until a pattern is generated
             setOnClickListener {
-                FamilyDataHolder.familyData.setSchedulePatternForActiveChild(eveningSchedule)
+                FamilyDataHolder.familyData.setSchedulePatternForActiveChild(eveningSchedule.subList(0, numberOfWeeks * 7).toList())
+                FirebaseUtils.saveActiveChild()
 
                 // Start CalendarActivity
                 startActivity(Intent(this@PatternInputActivity, CalendarActivity::class.java))

@@ -1,6 +1,10 @@
 package com.project.sharedcustodycalendar.objects
 
-data class Parent(val name: String, val color: String) {
+data class Parent(
+    val name: String = "",
+    val color: String = "",
+    val id: Int = 0
+) {
 
     companion object {
         fun fromString(str: String): Parent? {

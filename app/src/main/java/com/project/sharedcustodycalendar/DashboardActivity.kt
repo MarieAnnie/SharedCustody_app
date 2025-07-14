@@ -4,13 +4,14 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.project.sharedcustodycalendar.objects.FamilyDataHolder
 import java.text.SimpleDateFormat
 import java.util.*
 
 class DashboardActivity : AppCompatActivity() {
 
-    private val children = listOf("Alice", "Ben", "Chloe") // sample children
     private var currentChildIndex = 0
 
     private lateinit var calendarView: CalendarView
@@ -19,6 +20,7 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var addChildButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Child: 840BD6
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dashboard)
 
@@ -45,8 +47,9 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun showCurrentChild() {
         childrenList.removeAllViews()
+        val family = FamilyDataHolder.familyData
 
-        val name = children[currentChildIndex]
+        val name = family?.activeChild?.childName ?: "No child selected"
         val childView = TextView(this).apply {
             text = name
             textSize = 18f
@@ -55,15 +58,33 @@ class DashboardActivity : AppCompatActivity() {
             setTextColor(Color.BLACK)
             textAlignment = TextView.TEXT_ALIGNMENT_CENTER
             setOnClickListener {
-                cycleChild()
+                showChildSelector()
             }
         }
-
         childrenList.addView(childView)
     }
 
-    private fun cycleChild() {
-        currentChildIndex = (currentChildIndex + 1) % children.size
-        showCurrentChild()
+
+    private fun showChildSelector() {
+        val family = FamilyDataHolder.familyData
+        val allChildren = family?.children ?: emptyList()
+
+        if (allChildren.isEmpty()) {
+            Toast.makeText(this, "No children available. Please add a child first.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val names = allChildren.map { it.childName }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("Select a child")
+            .setItems(names) { _, which ->
+                val selectedChild = allChildren[which]
+                family.setActiveChild(selectedChild.childID)
+                showCurrentChild()
+            }
+            .show()
     }
+
+
 }

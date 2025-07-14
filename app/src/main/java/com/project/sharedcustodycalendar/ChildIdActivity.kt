@@ -2,11 +2,15 @@ package com.project.sharedcustodycalendar
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.ktx.Firebase
+
 import com.project.sharedcustodycalendar.objects.FamilyDataHolder
+import com.project.sharedcustodycalendar.utils.FirebaseUtils
 
 class ChildIdActivity :  AppCompatActivity() {
 
@@ -28,16 +32,16 @@ class ChildIdActivity :  AppCompatActivity() {
             val familyId = familyIdField.text.toString().trim()
 
             if (familyId.isNotEmpty()) {
-                // TODO: Check against backend (Firebase or Flask)
-
-                // For now: simulate result
-                if (familyId.lowercase() == "testfamily") {
-                    Toast.makeText(this, "Family ID found. Loading calendar...", Toast.LENGTH_SHORT).show()
-                    // TODO: Navigate to CalendarActivity
-                } else {
-                    Toast.makeText(this, "Family ID not found. Creating new calendar...", Toast.LENGTH_SHORT).show()
-                    // TODO: Navigate to CreateNewCalendarActivity
+                FirebaseUtils.loadChild(familyId) { child ->
+                    if (child != null) {
+                        Log.d("Firebase", "Loaded child: ${child.childName}")
+                        FamilyDataHolder.familyData.setActiveChild(child.childID)
+                    }
+                    else {
+                        Log.e("Firebase", "Child not found.")
+                    }
                 }
+
             } else {
                 Toast.makeText(this, "Please enter a Family ID.", Toast.LENGTH_SHORT).show()
             }

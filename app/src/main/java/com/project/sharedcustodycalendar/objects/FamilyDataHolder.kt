@@ -6,13 +6,6 @@ object FamilyDataHolder {
 
     // TODO : add a time for the parent switch
 
-    data class Child(
-        val childName: String = "",
-        val childID: String = "",
-        val parents: List<Parent> = emptyList(),
-        val schedulePattern: List<Int> = emptyList()
-    )
-
     data class FamilyData(
         val children: MutableList<Child> = mutableListOf()
     ) {
