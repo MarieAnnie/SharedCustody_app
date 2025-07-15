@@ -1,15 +1,35 @@
 package com.project.sharedcustodycalendar.objects
 
+import org.json.JSONArray
+import org.json.JSONObject
 import java.util.UUID
 
 object FamilyDataHolder {
 
     // TODO : add a time for the parent switch
+    val familyData: FamilyData = FamilyData()
 
     data class FamilyData(
         val children: MutableList<Child> = mutableListOf()
     ) {
         var activeChild: Child? = null
+
+        fun toJson(): JSONObject {
+            val json = JSONObject()
+            json.put("children", JSONArray(children.map { it.toJson() }))
+            return json
+        }
+
+        fun fromJson(json: JSONObject) {
+            children.clear()
+            val childrenArray = json.getJSONArray("children")
+            for (i in 0 until childrenArray.length()) {
+                val childJson = childrenArray.getJSONObject(i)
+                val child = Child()
+                child.fromJson(childJson)
+                children.add(child)
+            }
+        }
 
         fun setActiveChild(childID: String) {
             activeChild = children.find { it.childID == childID }
@@ -46,6 +66,4 @@ object FamilyDataHolder {
             }
         }
     }
-
-    var familyData: FamilyData = FamilyData()
 }

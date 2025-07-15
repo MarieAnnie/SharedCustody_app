@@ -49,7 +49,7 @@ class GenerateCalendar {
             val calendar = Calendar.getInstance()
             calendar.set(year, month - 1, 1) // month is 0-based
 
-            val firstDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) // 1 (Sunday) to 7 (Saturday)
+            val firstDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)  // 1 (Sunday) to 7 (Saturday)
             val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
 
             val matrix = mutableListOf<MutableList<Int>>()
@@ -75,7 +75,7 @@ class GenerateCalendar {
                 matrix.add(currentWeek)
             }
 
-            return MonthMatrixResult(matrix, dayIndex, daysInMonth)
+            return MonthMatrixResult(matrix, firstDayOfWeek - 1, daysInMonth)
         }
 
         fun set_pattern(day: Int, starting_parent: Int, schedulePattern : List<Int>) {

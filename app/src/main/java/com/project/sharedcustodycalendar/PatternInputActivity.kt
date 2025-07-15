@@ -1,13 +1,8 @@
 package com.project.sharedcustodycalendar
 
-import android.content.Context
+
 import android.content.Intent
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Path
 import android.os.Bundle
-import android.view.View
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
@@ -107,12 +102,6 @@ class PatternInputActivity : AppCompatActivity() {
             }
             calendarGrid.addView(weekRow)
         }
-    }
-
-    private val borderPaint = Paint().apply {
-        color = Color.BLACK
-        style = Paint.Style.STROKE
-        strokeWidth = 4f  // adjust thickness if needed
     }
 
 }

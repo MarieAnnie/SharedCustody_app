@@ -7,6 +7,7 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.project.sharedcustodycalendar.objects.FamilyDataHolder
+import com.project.sharedcustodycalendar.utils.CalendarStorageUtils
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -19,6 +20,9 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var childrenList: LinearLayout
     private lateinit var addChildButton: Button
 
+    // TODO add button to modify calendar
+    // TODO Change calendar
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Child: 840BD6
         super.onCreate(savedInstanceState)
@@ -29,6 +33,9 @@ class DashboardActivity : AppCompatActivity() {
         calendarView = findViewById(R.id.calendarView)
         childrenList = findViewById(R.id.childrenList)
         addChildButton = findViewById(R.id.addChildButton)
+
+        //load data
+        CalendarStorageUtils.loadLocally(this)
 
         // Set today's date
         val today = Calendar.getInstance()

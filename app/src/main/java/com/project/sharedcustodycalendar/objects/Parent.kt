@@ -1,29 +1,28 @@
 package com.project.sharedcustodycalendar.objects
 
+import org.json.JSONObject
+
 data class Parent(
-    val name: String = "",
-    val color: String = "",
-    val id: Int = 0
+    var name: String = "",
+    var color: String = "",
+    var id: Int = 0
 ) {
+    fun toJson(): JSONObject {
+        val json = JSONObject()
+        json.put("name", name)
+        json.put("color", color)
+        json.put("id", id)
+        return json
+    }
 
     companion object {
-        fun fromString(str: String): Parent? {
-            // Example input format: "name:Alice,color:Blue"
-            val parts = str.split(",")
-            var name: String? = null
-            var color: String? = null
-
-            for (part in parts) {
-                val keyValue = part.split(":")
-                if (keyValue.size == 2) {
-                    when (keyValue[0].trim().lowercase()) {
-                        "name" -> name = keyValue[1].trim()
-                        "color" -> color = keyValue[1].trim()
-                    }
-                }
-            }
-
-            return if (name != null && color != null) Parent(name, color) else null
+        fun fromJson(json: JSONObject): Parent {
+            return Parent(
+                name = json.getString("name"),
+                color = json.getString("color"),
+                id = json.getInt("id")
+            )
         }
     }
+
 }
