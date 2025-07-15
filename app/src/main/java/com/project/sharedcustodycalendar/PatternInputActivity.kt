@@ -14,6 +14,8 @@ import androidx.appcompat.app.AppCompatActivity
 
 import com.project.sharedcustodycalendar.objects.FamilyDataHolder
 import com.project.sharedcustodycalendar.utils.FirebaseUtils
+import com.project.sharedcustodycalendar.utils.CalendarUIUtils
+import com.project.sharedcustodycalendar.views.TriangleToggleCell
 
 class PatternInputActivity : AppCompatActivity() {
 
@@ -59,27 +61,12 @@ class PatternInputActivity : AppCompatActivity() {
         generateButton.setOnClickListener {
             numberOfWeeks = weekCountInput.text.toString().toIntOrNull() ?: 0
             if (numberOfWeeks in 1..4) {
-                drawLegend()
+                CalendarUIUtils.drawLegend(this@PatternInputActivity, legendLayout)
                 drawCalendarGrid()
                 saveButton.isEnabled = true
             } else {
                 Toast.makeText(this, "Please enter a number between 1 and 4", Toast.LENGTH_SHORT).show()
             }
-        }
-    }
-
-    private fun drawLegend() {
-        legendLayout.removeAllViews()
-        val parents = FamilyDataHolder.familyData.activeChild?.parents ?: return
-
-        parents.forEach { parent ->
-            val item = TextView(this).apply {
-                text = parent.name
-                setPadding(16, 0, 16, 0)
-                setBackgroundColor(Color.parseColor(parent.color))
-                setTextColor(Color.WHITE)
-            }
-            legendLayout.addView(item)
         }
     }
 
@@ -112,7 +99,7 @@ class PatternInputActivity : AppCompatActivity() {
             }
             for (col in 0 until 7) {
                 val index = row * 7 + col
-                val cell = TriangleToggleCell(this, index)
+                val cell = TriangleToggleCell(this, index, morningSchedule, eveningSchedule, numberOfWeeks*7, cellViews)
                 val cellParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
                 cell.layoutParams = cellParams
                 cellViews.add(cell)
@@ -122,69 +109,10 @@ class PatternInputActivity : AppCompatActivity() {
         }
     }
 
-    inner class TriangleToggleCell(context: Context, val index: Int) : View(context) {
-        private val paintTop = Paint().apply { style = Paint.Style.FILL }
-        private val paintBottom = Paint().apply { style = Paint.Style.FILL }
-
-        init {
-            setOnClickListener {
-                val totalDays = numberOfWeeks * 7
-                // Toggle evening of current day and morning of next day (wrap around)
-                val newValue = 1 - eveningSchedule[index]
-
-                // Toggle between parent 0 and parent 1
-                // Toggle based on current value
-                eveningSchedule[index] = newValue
-                morningSchedule[(index + 1) % totalDays] = newValue
-
-
-                invalidate()
-                cellViews.getOrNull((index + 1) % totalDays)?.invalidate()
-            }
-        }
-
-        override fun onDraw(canvas: Canvas) {
-            super.onDraw(canvas)
-            val parents = FamilyDataHolder.familyData.activeChild?.parents ?: return
-
-            val morningColor = Color.parseColor(parents[morningSchedule[index]].color)
-            val eveningColor = Color.parseColor(parents[eveningSchedule[index]].color)
-
-            paintTop.color = morningColor
-            paintBottom.color = eveningColor
-
-            val pathTop = Path().apply {
-                moveTo(0f, 0f)
-                lineTo(width.toFloat(), 0f)
-                lineTo(0f, height.toFloat())
-                close()
-            }
-
-            val pathBottom = Path().apply {
-                moveTo(width.toFloat(), height.toFloat())
-                lineTo(0f, height.toFloat())
-                lineTo(width.toFloat(), 0f)
-                close()
-            }
-
-            canvas.drawPath(pathTop, paintTop)
-            canvas.drawPath(pathBottom, paintBottom)
-
-            // Black border
-            canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), borderPaint)
-        }
-
-
-        override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-            // Let width be dictated by layout weights, so height = width for square
-            val widthSize = MeasureSpec.getSize(widthMeasureSpec)
-            setMeasuredDimension(widthSize, widthSize)
-        }
-
-        private val borderPaint = Paint().apply {
-            color = Color.BLACK
-            style = Paint.Style.STROKE
-            strokeWidth = 4f  // adjust thickness if needed
-        }
+    private val borderPaint = Paint().apply {
+        color = Color.BLACK
+        style = Paint.Style.STROKE
+        strokeWidth = 4f  // adjust thickness if needed
     }
+
 }

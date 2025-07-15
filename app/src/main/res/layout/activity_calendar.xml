@@ -3,22 +3,39 @@
     android:fitsSystemWindows="true"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="#ffcccc">
 
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- Title -->
         <TextView
             android:id="@+id/titleTextView"
-            android:text="New Calendar for"
-            android:textStyle="bold"
-            android:textSize="22sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp" />
+            android:textStyle="bold"
+            android:textSize="22sp"
+            android:layout_marginBottom="8dp"/>
 
+        <CalendarView
+            android:id="@+id/calendarView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:id="@+id/legendLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:id="@+id/calendarGrid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"/>
     </LinearLayout>
 </ScrollView>
