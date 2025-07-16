@@ -2,9 +2,7 @@ package com.project.sharedcustodycalendar.views
 
 import android.content.Context
 import android.graphics.*
-import android.view.Gravity
 import android.view.View
-import android.widget.FrameLayout
 import com.project.sharedcustodycalendar.objects.FamilyDataHolder
 
 class TriangleToggleCell(
@@ -13,11 +11,12 @@ class TriangleToggleCell(
     private val morningSchedule: MutableList<Int>,
     private val eveningSchedule: MutableList<Int>,
     private val totalDays: Int,
-    private val cellViews: List<View>, // Optional, for cross-updates
+    private val cellViews: List<View> = emptyList(), // Optional, for cross-updates
 ) : View(context) {
 
     private var showNumber = false
     private var isInCalendarActivity = false
+    private var isViewer = false
     private var year = -1
     private var monthId = -1
     private val textPaint = Paint().apply {
@@ -35,23 +34,25 @@ class TriangleToggleCell(
     }
 
     init {
-        setOnClickListener {
-            val newValue = 1 - eveningSchedule[index]
-            eveningSchedule[index] = newValue
-            if (index+1 >= morningSchedule.size) {
-                if (!isInCalendarActivity) {
+        if (!isViewer) {
+            setOnClickListener {
+                val newValue = 1 - eveningSchedule[index]
+                eveningSchedule[index] = newValue
+                if (index + 1 >= morningSchedule.size) {
+                    if (!isInCalendarActivity) {
+                        morningSchedule[(index + 1) % totalDays] = newValue
+                    }
+                } else {
                     morningSchedule[(index + 1) % totalDays] = newValue
                 }
-            } else {
-                morningSchedule[(index + 1) % totalDays] = newValue
-            }
 
-            invalidate()
-            cellViews.getOrNull((index + 1) % totalDays)?.invalidate()
+                invalidate()
+                cellViews.getOrNull((index + 1) % totalDays)?.invalidate()
 
-            if (isInCalendarActivity){
-                val activeChild =  FamilyDataHolder.familyData.activeChild
-                activeChild?.changeParentNight(year.toString(), monthId, index+1, newValue)
+                if (isInCalendarActivity) {
+                    val activeChild = FamilyDataHolder.familyData.activeChild
+                    activeChild?.changeParentNight(year.toString(), monthId, index + 1, newValue)
+                }
             }
         }
     }
@@ -107,6 +108,15 @@ class TriangleToggleCell(
         isInCalendarActivity = true
         this.year = year
         this.monthId = monthId
+    }
+
+    fun isViewer(year: Int, monthId: Int){
+        showNumber = true
+        invalidate()
+        isViewer = true
+        this.year = year
+        this.monthId = monthId
+        setOnClickListener(null)
     }
 
     fun updateMonthYear (year: Int, monthId: Int) {

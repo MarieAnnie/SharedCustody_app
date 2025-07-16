@@ -28,10 +28,16 @@ object FamilyDataHolder {
                 child.fromJson(childJson)
                 children.add(child)
             }
+            activeChild = children.firstOrNull()
         }
 
         fun setActiveChild(childID: String) {
             activeChild = children.find { it.childID == childID }
+        }
+
+        fun deleteChild(childID: String) {
+            children.removeAll { it.childID == childID }
+            activeChild = children.firstOrNull()
         }
 
         fun createNewChild(childName: String) {
