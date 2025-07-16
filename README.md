@@ -1,10 +1,3 @@
 ﻿# SharedCustody_app
 
-TODO : regenerate calendar
-TODO : add button to go back to the dashboard
-TODO : center legend and buttons on calendar Activity
-TODO : delete baby (from phone and database)
-TODO : 2026
-TODO : add time to switch parent
-TODO : redo Dashboard
-TODO : automatically select a child on the dashboard
+App to manage irregular shared custody and provide notification for picking up a kid to both parents
