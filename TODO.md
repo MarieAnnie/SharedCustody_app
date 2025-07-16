@@ -1,7 +1,7 @@
-# Project Name
-Shared Custody Calendar
+# Shared Custody Calendar
+App to manage irregular shared custody and provide notification for picking up a kid to both parents
 
-### Column Name
+### TODO
 - [ ] Dashboard
   - [ ] redo dashboard
   - [ ] delete child (from phone and database)
