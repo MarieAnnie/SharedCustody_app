@@ -3,12 +3,10 @@ App to manage irregular shared custody and provide notification for picking up a
 
 ### TODO
 - [ ] Dashboard
-  - [ ] redo dashboard
-  - [ ] delete child (from phone and database)
-  - [ ] automatically select a child
-     
+  - [ ] add Events
+  - [ ] add buttom to go to TODO list
+        
 - [ ] Calendar Activity
-  - [ ] center legend and buttons on calendar Activity
   - [ ] 2026
   - [ ] regenerate calendar
 
@@ -18,6 +16,7 @@ App to manage irregular shared custody and provide notification for picking up a
 - [ ] Other
   - [ ] add button to go back to the dashboard
   - [ ] Create Event activity
+  - [ ] Create TODO list
   - [ ] add notifications pick up
   - [ ] deal with changes from  other parent
   - [ ] add second token just for visibility
