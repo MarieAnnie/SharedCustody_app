@@ -13,10 +13,13 @@ class TriangleToggleCell(
     private val morningSchedule: MutableList<Int>,
     private val eveningSchedule: MutableList<Int>,
     private val totalDays: Int,
-    private val cellViews: List<View> // Optional, for cross-updates
+    private val cellViews: List<View>, // Optional, for cross-updates
 ) : View(context) {
 
     private var showNumber = false
+    private var isInCalendarActivity = false
+    private var year = -1
+    private var monthId = -1
     private val textPaint = Paint().apply {
         color = Color.BLACK
         textSize = 36f * resources.displayMetrics.density  // adjust as needed
@@ -35,10 +38,21 @@ class TriangleToggleCell(
         setOnClickListener {
             val newValue = 1 - eveningSchedule[index]
             eveningSchedule[index] = newValue
-            morningSchedule[(index + 1) % totalDays] = newValue
+            if (index+1 >= morningSchedule.size) {
+                if (!isInCalendarActivity) {
+                    morningSchedule[(index + 1) % totalDays] = newValue
+                }
+            } else {
+                morningSchedule[(index + 1) % totalDays] = newValue
+            }
 
             invalidate()
             cellViews.getOrNull((index + 1) % totalDays)?.invalidate()
+
+            if (isInCalendarActivity){
+                val activeChild =  FamilyDataHolder.familyData.activeChild
+                activeChild?.changeParentNight(year.toString(), monthId, index+1, newValue)
+            }
         }
     }
 
@@ -87,10 +101,19 @@ class TriangleToggleCell(
         }
     }
 
-    fun drawNumbers(){
+    fun isCalendarActive(year: Int, monthId: Int) {
         showNumber = true
         invalidate()
+        isInCalendarActivity = true
+        this.year = year
+        this.monthId = monthId
     }
+
+    fun updateMonthYear (year: Int, monthId: Int) {
+        this.year = year
+        this.monthId = monthId
+    }
+
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val widthSize = MeasureSpec.getSize(widthMeasureSpec)
         setMeasuredDimension(widthSize, widthSize) // Make square

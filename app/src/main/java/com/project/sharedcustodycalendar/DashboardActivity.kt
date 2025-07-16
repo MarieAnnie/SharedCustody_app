@@ -3,6 +3,7 @@ package com.project.sharedcustodycalendar
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.telecom.Connection.RttModifyStatus
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -19,12 +20,9 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var todayTextView: TextView
     private lateinit var childrenList: LinearLayout
     private lateinit var addChildButton: Button
-
-    // TODO add button to modify calendar
-    // TODO Change calendar
+    private lateinit var modifyButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Child: 840BD6
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dashboard)
 
@@ -33,6 +31,11 @@ class DashboardActivity : AppCompatActivity() {
         calendarView = findViewById(R.id.calendarView)
         childrenList = findViewById(R.id.childrenList)
         addChildButton = findViewById(R.id.addChildButton)
+        modifyButton = findViewById(R.id.modifyButton)
+
+        modifyButton.setOnClickListener {
+            startActivity(Intent(this, CalendarActivity::class.java))
+        }
 
         //load data
         CalendarStorageUtils.loadLocally(this)

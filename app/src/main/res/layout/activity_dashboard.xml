@@ -46,6 +46,13 @@
                 android:layout_height="wrap_content" />
         </ScrollView>
 
+        <Button
+            android:id="@+id/modifyButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Modify Calendar"
+            android:layout_marginTop="16dp" />
+
         <!-- Today -->
         <TextView
             android:id="@+id/todayTextView"

@@ -29,7 +29,7 @@ data class Month(
     }
 
 
-    fun updateParent0Nights(day:Int, newParent: Int =-1) {
+    fun updateParent0Nights(day:Int, newParent: Int =-1) : Int {
         if (newParent != -1) {
             if (parent0_nights.contains(day)) {
                 parent0_nights.remove(day)
@@ -46,6 +46,8 @@ data class Month(
         }
         // Keep the list sorted
         parent0_nights.sort()
+
+        return if (parent0_nights.contains(day)) 0 else 1
 
     }
 

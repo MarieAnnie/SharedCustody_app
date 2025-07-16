@@ -6,7 +6,6 @@ import java.util.UUID
 
 object FamilyDataHolder {
 
-    // TODO : add a time for the parent switch
     val familyData: FamilyData = FamilyData()
 
     data class FamilyData(

@@ -31,6 +31,8 @@ class CalendarActivity :  AppCompatActivity() {
     private lateinit var nextMonthBtn: Button
     private lateinit var saveButton: Button
 
+    private val cellViews = mutableListOf<TriangleToggleCell>()
+
     private lateinit var activeChild: Child
     private var year : Int = 0
     private var month : Int = 0
@@ -90,15 +92,8 @@ class CalendarActivity :  AppCompatActivity() {
 
         activeChild.initializeCalendar(year, month, 0)
 
-        if (activeChild == null) {
-            Log.e("CalendarActivity", "Active child is null")
-        } else {
-            Log.d("CalendarActivity", "print parent0 evenings : ${activeChild.getParent0EveningSchedule(year.toString(), month)}")
-        }
         // initial draw for current month
         drawCalendarGrid(month, year, activeChild)
-
-        // TODO : change month
     }
 
 
@@ -136,6 +131,7 @@ class CalendarActivity :  AppCompatActivity() {
 
             // Clear existing views
             calendarGrid.removeAllViews()
+            cellViews.clear()
 
             // Add blank cells before the first day
             for (i in 1 until startDayOfWeek) {
@@ -152,9 +148,9 @@ class CalendarActivity :  AppCompatActivity() {
                     morningSchedule = morningSchedule,
                     eveningSchedule = eveningSchedule,
                     totalDays = daysInMonth,
-                    cellViews = mutableListOf()  // shared list declared in Activity if needed
+                    cellViews = cellViews  // shared list declared in Activity if needed
                 )
-                cell.drawNumbers()
+                cell.isCalendarActive(year, monthIdx)
 
                 val size = resources.displayMetrics.widthPixels / 7
                 val params = GridLayout.LayoutParams().apply {
@@ -166,6 +162,8 @@ class CalendarActivity :  AppCompatActivity() {
                 cell.layoutParams = params
                 calendarGrid.addView(cell)
 
+                cellViews.add(cell)
+
             }
 
         }
@@ -175,6 +173,9 @@ class CalendarActivity :  AppCompatActivity() {
         if (month < 1) { month = 12; year-- }
         else if (month > 12) { month = 1; year++ }
         updateHeaderAndGrid()
+        if (cellViews.isNotEmpty()) {
+            cellViews.forEach { it.updateMonthYear(year, month) }
+        }
     }
 
     private fun updateHeaderAndGrid() {
@@ -190,42 +191,5 @@ class CalendarActivity :  AppCompatActivity() {
         drawCalendarGrid(month, year, activeChild)
     }
 
-
-        // TODO regenerate with other parent (set morning[0] to 1) and regenerate calendar with 1 based on the current month
-        /*titleTextView.text = "New Calendar for $activeChildName ($activeChildToken)"
-
-        calendarView = findViewById(R.id.calendarView)
-
-        // TODO show text "click on the parent's name to change who has the child on the first day of the month"
-        // TODO show legend (see code)
-        // TODO add toggle option on the legend
-
-        val today = Calendar.getInstance()
-        calendarView.date = today.timeInMillis
-
-        val activeChild = FamilyDataHolder.familyData.activeChild
-        val year = today.get(Calendar.YEAR)
-        val month = today.get(Calendar.MONTH) + 1
-
-        activeChild.initializeCalendar(year,month, 0)
-
-        //TODO : overlaps the triangles
-        // if the month wasn't initialized leave it white, consider other months than current one
-        // TODO add toggle option. when clicking on a day change the evening color and the next morning color
-
-        // TODO 2026
-
-        //TODO cycle on the schedule pattern*/
-    // TODO doesn't toggle morning
-    // TODO center legend
-    // TODO allign on the same line month and <>
-    // TODO add save bottom
-    // Generate calendar from this month
-
-
-
-        // For each month in val activeChild = FamilyDataHolder.familyData?.activeChild ?: return -1
-
-
-    }
+ }
 

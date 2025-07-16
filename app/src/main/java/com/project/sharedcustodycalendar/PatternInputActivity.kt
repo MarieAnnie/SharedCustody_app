@@ -94,7 +94,13 @@ class PatternInputActivity : AppCompatActivity() {
             }
             for (col in 0 until 7) {
                 val index = row * 7 + col
-                val cell = TriangleToggleCell(this, index, morningSchedule, eveningSchedule, numberOfWeeks*7, cellViews)
+                val cell = TriangleToggleCell(
+                    context = this,
+                    index =index,
+                    morningSchedule = morningSchedule,
+                    eveningSchedule = eveningSchedule,
+                    totalDays = numberOfWeeks*7,
+                    cellViews= cellViews)
                 val cellParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
                 cell.layoutParams = cellParams
                 cellViews.add(cell)
