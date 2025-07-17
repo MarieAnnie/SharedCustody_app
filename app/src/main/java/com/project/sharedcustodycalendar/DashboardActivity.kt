@@ -52,7 +52,7 @@ class DashboardActivity : AppCompatActivity() {
         modifyButton.visibility = View.GONE
 
         activeChild = FamilyDataHolder.familyData.activeChild
-        /*val currentChild = FamilyDataHolder.familyData.activeChild
+        val currentChild = FamilyDataHolder.familyData.activeChild
 
         modifyButton.visibility = View.GONE
 
@@ -63,7 +63,7 @@ class DashboardActivity : AppCompatActivity() {
             }
         } else {
             modifyButton.setOnClickListener(null)
-        }*/
+        }
 
         // Set today's date
         val today = Calendar.getInstance()
@@ -92,11 +92,10 @@ class DashboardActivity : AppCompatActivity() {
             monthLabelView = findViewById(R.id.monthLabelView),
             cellViews = mutableListOf<TriangleToggleCell>(),
             calendarGrid = findViewById(R.id.calendarGrid),
-            activeChild = FamilyDataHolder.familyData.activeChild!!,
+            activeChild = FamilyDataHolder.familyData.activeChild,
             context = this,
             isViewer = true
         )
-
 
         prevMonthBtn.setOnClickListener { CalendarUIUtils.shiftMonth(-1, params) }
         nextMonthBtn.setOnClickListener { CalendarUIUtils.shiftMonth(+1, params) }

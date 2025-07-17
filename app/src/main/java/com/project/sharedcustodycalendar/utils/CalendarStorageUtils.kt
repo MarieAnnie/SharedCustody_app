@@ -106,6 +106,10 @@ object CalendarStorageUtils {
             if (dataholder.userID.isNotEmpty()) {
                 if (dataholder.userID == currentID) {
                     User.userData = dataholder
+                    Log.i("LoadLocal", "User data loaded from local file.")
+                    if (User.userData.childPermissions.isNotEmpty()){
+                        Log.i("LoadLocal", "${User.userData.childPermissions}")
+                    }
                 } else {
                     loadFromFirebase = true
                 }

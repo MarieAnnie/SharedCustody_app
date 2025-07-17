@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.project.sharedcustodycalendar.model.User
 
 import com.project.sharedcustodycalendar.objects.FamilyDataHolder
+import com.project.sharedcustodycalendar.utils.CalendarStorageUtils
 import com.project.sharedcustodycalendar.utils.FirebaseUtils
 import com.project.sharedcustodycalendar.utils.IDEncoder
 
@@ -48,9 +49,19 @@ class ChildIdActivity :  AppCompatActivity() {
                 FirebaseUtils.loadChild(childID) { child ->
                     if (child != null) {
                         Log.d("Firebase", "Loaded child: ${child.childName}")
+
+                        // Add child to the family list if not already there
+                        val existing = FamilyDataHolder.familyData.children.find { it.childID == child.childID }
+                        if (existing == null) {
+                            FamilyDataHolder.familyData.children.add(child)
+                        }
+
+                        // Set active child
                         FamilyDataHolder.familyData.setActiveChild(child.childID)
-                        User.userData.childPermissions[childID] = permission
-                        FirebaseUtils.saveUserPermission()
+
+                        // Optionally save locally after update
+                        CalendarStorageUtils.saveLocally(this)
+                        startActivity(Intent(this, DashboardActivity::class.java))
                     } else {
                         Log.e("Firebase", "Child not found.")
                     }

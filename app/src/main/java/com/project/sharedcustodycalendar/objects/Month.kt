@@ -10,6 +10,9 @@ data class Month(
     var starting_parent: Int = 0,
     var parent0_nights: MutableList<Int>
 ) {
+    // for Firebase
+    constructor() : this(0, 0, mutableListOf())
+
     fun toJson(): JSONObject{
         val json = JSONObject()
         json.put("monthId", monthId)
