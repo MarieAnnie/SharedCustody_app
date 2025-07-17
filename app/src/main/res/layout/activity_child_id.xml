@@ -15,20 +15,21 @@
 click on continue. Else, enter the child name and click on create to start new child calendar. " />
 
     <EditText
-        android:id="@+id/family_id_input"
+        android:id="@+id/child_id_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Enter Family ID"
+        android:hint="Enter Child ID (for parents)"
         android:inputType="text"
         android:maxLines="1"
         android:layout_marginTop="16dp"/>
 
     <Button
-        android:id="@+id/family_id_button"
+        android:id="@+id/child_id_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Continue"
         android:layout_marginTop="16dp" />
+
 
     <EditText
         android:id="@+id/new_calendar_input"

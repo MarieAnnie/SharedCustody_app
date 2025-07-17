@@ -11,14 +11,20 @@
         android:layout_width="match_parent"
         android:layout_height="61dp"
         android:layout_marginTop="16dp"
-        android:text="Enter the family ID if a family has been already created.
-        If not, leave the space empty and clock on continue" />
+        android:text="Fill the form to register. The username that will be viewed by other family members" />
 
 
     <EditText
         android:id="@+id/email_field"
         android:hint="Email"
         android:inputType="textEmailAddress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <EditText
+        android:id="@+id/username_field"
+        android:hint="Username"
+        android:inputType="text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
@@ -31,22 +37,8 @@
         android:layout_marginTop="12dp"/>
 
     <Button
-        android:id="@+id/login_button"
-        android:text="Log In"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"/>
-
-    <Button
         android:id="@+id/register_button"
         android:text="Register"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"/>
-
-    <Button
-        android:id="@+id/forgotPassword_button"
-        android:text="Forgot password?"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"/>

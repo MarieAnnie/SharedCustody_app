@@ -9,10 +9,12 @@ import com.project.sharedcustodycalendar.utils.CalendarStorageUtils.toIntList
 import com.project.sharedcustodycalendar.utils.CalendarStorageUtils.mapToJson
 import com.project.sharedcustodycalendar.utils.CalendarStorageUtils.map
 import com.project.sharedcustodycalendar.utils.CalendarStorageUtils.toMonthMap
+import com.project.sharedcustodycalendar.utils.IDEncoder
 import java.util.Calendar
 
 data class Child(
     var childName: String = "",
+    var viewerToken: String = "",
     var childID: String = "",
     var parents: List<Parent> = emptyList(),
     var schedulePattern: List<Int> = emptyList(),
@@ -115,6 +117,13 @@ data class Child(
         //}
         FirebaseUtils.saveActiveChild()
 
+    }
+
+    fun getViewerID(): String {
+        if (viewerToken.isEmpty()) {
+            viewerToken = IDEncoder.encodeViewerID(childID)
+        }
+        return viewerToken
     }
 
     fun isContinuous(sequence: List<Int>): Boolean {

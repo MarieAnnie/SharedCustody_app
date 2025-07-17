@@ -1,5 +1,7 @@
 package com.project.sharedcustodycalendar.objects
 
+import com.project.sharedcustodycalendar.model.User
+import com.project.sharedcustodycalendar.utils.FirebaseUtils
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
@@ -9,7 +11,7 @@ object FamilyDataHolder {
     val familyData: FamilyData = FamilyData()
 
     data class FamilyData(
-        val children: MutableList<Child> = mutableListOf()
+        var children: MutableList<Child> = mutableListOf()
     ) {
         var activeChild: Child? = null
 
@@ -45,6 +47,8 @@ object FamilyDataHolder {
             val newChild = Child(childID = childToken, childName = childName)
             children.add(newChild)
             activeChild = newChild
+            User.userData.childPermissions[newChild.childID] = 0
+            FirebaseUtils.saveUserPermission()
         }
 
         fun setParentsForActiveChild(newParents: List<Parent>) {

@@ -7,43 +7,56 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.ktx.Firebase
+import com.project.sharedcustodycalendar.model.User
 
 import com.project.sharedcustodycalendar.objects.FamilyDataHolder
 import com.project.sharedcustodycalendar.utils.FirebaseUtils
+import com.project.sharedcustodycalendar.utils.IDEncoder
 
 class ChildIdActivity :  AppCompatActivity() {
 
-    private lateinit var familyIdField: EditText
-    private lateinit var continueButton: Button
+    private lateinit var childIdField: EditText
+    private lateinit var childIdButton: Button
     private lateinit var childNameField: EditText
     private lateinit var createNewCalendarButton : Button
+    private var permission :Int = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_child_id)
 
-        familyIdField = findViewById(R.id.family_id_input)
-        continueButton = findViewById(R.id.family_id_button)
+        childIdField = findViewById(R.id.child_id_input)
+        childIdButton = findViewById(R.id.child_id_button)
         childNameField = findViewById(R.id.new_calendar_input)
         createNewCalendarButton = findViewById(R.id.new_calendar_button)
 
-        continueButton.setOnClickListener {
-            val familyId = familyIdField.text.toString().trim()
+        childIdButton .setOnClickListener {
+            val idInput =  childIdField.text.toString().trim()
+            if (idInput.isNotEmpty()) {
+                var childID = idInput
+                var viewerID = idInput
 
-            if (familyId.isNotEmpty()) {
-                FirebaseUtils.loadChild(familyId) { child ->
+                if(idInput.startsWith(IDEncoder.VIEWER_PREFIX)){
+                    childID = IDEncoder.decodeID(idInput).toString()
+                    permission = 1
+                }
+                else {
+                    viewerID = IDEncoder.encodeViewerID(idInput)
+                    permission = 0
+                }
+
+                FirebaseUtils.loadChild(childID) { child ->
                     if (child != null) {
                         Log.d("Firebase", "Loaded child: ${child.childName}")
                         FamilyDataHolder.familyData.setActiveChild(child.childID)
-                    }
-                    else {
+                        User.userData.childPermissions[childID] = permission
+                        FirebaseUtils.saveUserPermission()
+                    } else {
                         Log.e("Firebase", "Child not found.")
                     }
                 }
-
             } else {
-                Toast.makeText(this, "Please enter a Family ID.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Please enter a Child ID.", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -52,7 +65,6 @@ class ChildIdActivity :  AppCompatActivity() {
             FamilyDataHolder.familyData.createNewChild(childName)
 
             if (childName.isNotEmpty()) {
-
                 Toast.makeText(this, "New calendar being created for $childName...", Toast.LENGTH_SHORT).show()
                 startActivity(Intent(this, SetParentsActivity::class.java))
 

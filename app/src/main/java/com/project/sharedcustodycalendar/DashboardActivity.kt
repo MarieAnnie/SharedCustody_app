@@ -3,9 +3,11 @@ package com.project.sharedcustodycalendar
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.project.sharedcustodycalendar.model.User
 import com.project.sharedcustodycalendar.objects.CalendarParameters
 import com.project.sharedcustodycalendar.objects.Child
 import com.project.sharedcustodycalendar.objects.FamilyDataHolder
@@ -47,15 +49,21 @@ class DashboardActivity : AppCompatActivity() {
         deleteChildButton = findViewById(R.id.deleteChildButton)
         modifyButton = findViewById(R.id.modifyButton)
 
-        modifyButton.setOnClickListener {
-            startActivity(Intent(this, CalendarActivity::class.java))
-        }
-
-        //load data
-        CalendarStorageUtils.loadLocally(this)
-
+        modifyButton.visibility = View.GONE
 
         activeChild = FamilyDataHolder.familyData.activeChild
+        /*val currentChild = FamilyDataHolder.familyData.activeChild
+
+        modifyButton.visibility = View.GONE
+
+        if (currentChild != null && User.userData.childPermissions[currentChild.childID] == 0) {
+            modifyButton.visibility = View.VISIBLE
+            modifyButton.setOnClickListener {
+                startActivity(Intent(this, CalendarActivity::class.java))
+            }
+        } else {
+            modifyButton.setOnClickListener(null)
+        }*/
 
         // Set today's date
         val today = Calendar.getInstance()

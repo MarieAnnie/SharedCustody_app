@@ -8,6 +8,7 @@ import android.widget.Toast
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.FirebaseApp
+import com.project.sharedcustodycalendar.utils.CalendarStorageUtils
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,6 +26,7 @@ class MainActivity : AppCompatActivity() {
         if (currentUser != null) {
             Log.d("MainActivity", "User is already signed in: ${currentUser.email}")
             // Go directly to Dashboard or FamilyId page
+            CalendarStorageUtils.loadLocally(this)
             startActivity(Intent(this, DashboardActivity::class.java))
             finish()
         } else {
