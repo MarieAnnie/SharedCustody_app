@@ -1,5 +1,6 @@
 package com.project.sharedcustodycalendar
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -8,6 +9,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.project.sharedcustodycalendar.model.User
+import com.project.sharedcustodycalendar.objects.Child
 
 import com.project.sharedcustodycalendar.objects.FamilyDataHolder
 import com.project.sharedcustodycalendar.utils.CalendarStorageUtils
@@ -39,7 +41,7 @@ class ChildIdActivity :  AppCompatActivity() {
 
                 if(idInput.startsWith(IDEncoder.VIEWER_PREFIX)){
                     childID = IDEncoder.decodeID(idInput).toString()
-                    permission = 1
+                    permission = 2
                 }
                 else {
                     viewerID = IDEncoder.encodeViewerID(idInput)
@@ -61,6 +63,13 @@ class ChildIdActivity :  AppCompatActivity() {
 
                         // Optionally save locally after update
                         CalendarStorageUtils.saveLocally(this)
+                        if( permission == 0) {
+                            whichParentWindow(child)
+                        }
+
+                        User.addChildPermission(childID, permission)
+                        FirebaseUtils.saveUserPermission()
+
                         startActivity(Intent(this, DashboardActivity::class.java))
                     } else {
                         Log.e("Firebase", "Child not found.")
@@ -83,5 +92,27 @@ class ChildIdActivity :  AppCompatActivity() {
                 Toast.makeText(this, "Please enter a child Name.", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    fun whichParentWindow(child: Child){
+            val parent0Name = child.parents.getOrNull(0)?.name ?: "Parent 1"
+            val parent1Name = child.parents.getOrNull(1)?.name ?: "Parent 2"
+
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle("Who are you?")
+
+            builder.setMessage("Select your name:")
+
+            builder.setPositiveButton(parent0Name) { _, _ ->
+                permission = 0
+            }
+
+            builder.setNegativeButton(parent1Name) { _, _ ->
+                permission = 1
+                FamilyDataHolder.familyData.activeChild?.parentHasConfirmed()
+            }
+
+            builder.setCancelable(false)
+            builder.show()
     }
 }

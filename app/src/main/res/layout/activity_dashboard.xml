@@ -1,150 +1,164 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:fitsSystemWindows="true"
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout android:id="@+id/swipeRefreshLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <LinearLayout
-        android:orientation="vertical"
+    <ScrollView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:fitsSystemWindows="true"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="8dp">
+        android:layout_height="match_parent">
 
-        <!-- Title and + button -->
         <LinearLayout
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical">
-
-            <!-- Title on the left -->
-            <TextView
-                android:text="Children"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content" />
+            android:padding="8dp">
 
             <!-- Centered Modify Button -->
             <Button
-                android:id="@+id/modifyButton"
+                android:id="@+id/sync"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="Modify Calendar" />
+                android:text="Sync Calendar" />
 
-            <!-- Right Buttons: + and - -->
+            <!-- Title and + button -->
             <LinearLayout
-                android:layout_width="0dp"
-                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="end"
-                android:orientation="horizontal">
+                android:gravity="center_vertical">
 
-                <Button
-                    android:id="@+id/addChildButton"
-                    android:text="+"
-                    android:layout_width="40dp"
+                <!-- Title on the left -->
+                <TextView
+                    android:text="Children"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
                     android:layout_height="wrap_content" />
 
+                <!-- Centered Modify Button -->
                 <Button
-                    android:id="@+id/deleteChildButton"
-                    android:text="-"
-                    android:layout_width="40dp"
+                    android:id="@+id/modifyButton"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="5dp" />
+                    android:layout_gravity="center"
+                    android:text="Modify Calendar" />
+
+                <!-- Right Buttons: + and - -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/addChildButton"
+                        android:text="+"
+                        android:layout_width="40dp"
+                        android:layout_height="wrap_content" />
+
+                    <Button
+                        android:id="@+id/deleteChildButton"
+                        android:text="-"
+                        android:layout_width="40dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp" />
+                </LinearLayout>
+
             </LinearLayout>
 
-        </LinearLayout>
+            <!-- Scrollable children list -->
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginTop="12dp">
 
-        <!-- Scrollable children list -->
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:layout_marginTop="12dp">
+                <LinearLayout
+                    android:id="@+id/childrenList"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </ScrollView>
+
+            <!-- Today -->
+            <TextView
+                android:id="@+id/todayTextView"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:layout_marginTop="24dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <!-- Calendar -->
+            <LinearLayout
+                android:id="@+id/monthHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginBottom="8dp">
+
+                <Button
+                    android:id="@+id/prevMonthBtn"
+                    android:text="&lt;"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+                <TextView
+                    android:id="@+id/monthLabelView"
+                    android:text="July 2025"
+                    android:layout_margin="0dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+                <Button
+                    android:id="@+id/nextMonthBtn"
+                    android:text="&gt;"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+            </LinearLayout>
+
+            <!-- weekday headers -->
+            <LinearLayout
+                android:id="@+id/headerRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <!-- we’ll populate this in code -->
+            </LinearLayout>
+
+
+            <GridLayout
+                android:id="@+id/calendarGrid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:columnCount="7"
+                android:alignmentMode="alignMargins"/>
 
             <LinearLayout
-                android:id="@+id/childrenList"
-                android:orientation="vertical"
+                android:id="@+id/legendLayout"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-        </ScrollView>
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginBottom="8dp"/>
 
-        <!-- Today -->
-        <TextView
-            android:id="@+id/todayTextView"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginTop="24dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-
-        <!-- Calendar -->
-        <LinearLayout
-            android:id="@+id/monthHeader"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginBottom="8dp">
-
-            <Button
-                android:id="@+id/prevMonthBtn"
-                android:text="&lt;"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-
+            <!-- Title on the left -->
             <TextView
-                android:id="@+id/monthLabelView"
-                android:text="July 2025"
-                android:layout_margin="0dp"
+                android:text="Next events"
+                android:textSize="18sp"
+                android:textStyle="bold"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content" />
 
-            <Button
-                android:id="@+id/nextMonthBtn"
-                android:text="&gt;"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
 
         </LinearLayout>
-
-        <!-- weekday headers -->
-        <LinearLayout
-            android:id="@+id/headerRow"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <!-- we’ll populate this in code -->
-        </LinearLayout>
-
-
-        <GridLayout
-            android:id="@+id/calendarGrid"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:columnCount="7"
-            android:alignmentMode="alignMargins"/>
-
-        <LinearLayout
-            android:id="@+id/legendLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginBottom="8dp"/>
-
-        <!-- Title on the left -->
-        <TextView
-            android:text="Next events"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-
-    </LinearLayout>
-</ScrollView>
+    </ScrollView>
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

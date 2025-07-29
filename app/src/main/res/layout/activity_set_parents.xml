@@ -31,7 +31,7 @@ and choose a different color for each parent. This color will be used to represe
 
         <!-- Parent 1 -->
         <TextView
-            android:text="Parent 1:"
+            android:text="You :"
             android:textStyle="bold"
             android:textSize="18sp"
             android:layout_width="wrap_content"
@@ -63,7 +63,7 @@ and choose a different color for each parent. This color will be used to represe
 
         <!-- Parent 2 -->
         <TextView
-            android:text="Parent 2:"
+            android:text="Other parent:"
             android:textStyle="bold"
             android:textSize="18sp"
             android:layout_width="wrap_content"

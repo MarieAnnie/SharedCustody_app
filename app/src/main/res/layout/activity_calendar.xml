@@ -81,5 +81,18 @@
             android:text="Save"
             android:layout_marginTop="16dp" />
 
+        <TextView
+            android:id="@+id/childID_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:layout_marginTop="20dp" />
+
+        <TextView
+            android:id="@+id/viewerToken_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:layout_marginTop="6dp" />
     </LinearLayout>
 </ScrollView>

@@ -1,8 +1,8 @@
 package com.project.sharedcustodycalendar.utils
 
 object IDEncoder {
-    private const val SECRET = "CUSTDY"  // Must be 6+ chars, same length as IDs
-    const val VIEWER_PREFIX = "_"
+    const val VIEWER_PREFIX = "V"
+    const val SECRET = "X1B9QZ"
 
     fun encodeViewerID(originalID: String): String {
         require(originalID.length == SECRET.length) { "ID length must match secret length." }

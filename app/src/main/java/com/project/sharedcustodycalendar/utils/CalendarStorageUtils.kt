@@ -168,6 +168,32 @@ object CalendarStorageUtils {
 
     }
 
+    fun syncAll() {
+        val familyChildIDs = FamilyDataHolder.familyData.children.map { it.childID }.toSet()
+
+        familyChildIDs.forEach { id ->
+            FirebaseUtils.loadChild(id) { child ->
+                if (child != null) {
+                    val index = FamilyDataHolder.familyData.children.indexOfFirst { it.childID == child.childID }
+
+                    if (index != -1) {
+                        // Replace the existing child with the updated one
+                        FamilyDataHolder.familyData.children[index] = child
+                        Log.d("Firebase", "Updated child: ${child.childName}")
+                    } else {
+                        // Add new child
+                        FamilyDataHolder.familyData.children.add(child)
+                        Log.d("Firebase", "Added new child: ${child.childName}")
+                    }
+
+                    FamilyDataHolder.familyData.setActiveChild(child.childID)
+                } else {
+                    Log.e("Firebase", "Child not found for ID: $id")
+                }
+            }
+        }
+    }
+
     fun syncChildPermissionsWithFamilyData() {
         val permissionIDs = User.userData.childPermissions.keys.toSet()
         val familyChildIDs = FamilyDataHolder.familyData.children.map { it.childID }.toSet()

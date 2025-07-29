@@ -47,6 +47,7 @@ object FamilyDataHolder {
             val newChild = Child(childID = childToken, childName = childName)
             children.add(newChild)
             activeChild = newChild
+            // TODO get correct permission
             User.userData.childPermissions[newChild.childID] = 0
             FirebaseUtils.saveUserPermission()
         }

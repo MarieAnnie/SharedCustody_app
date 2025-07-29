@@ -7,15 +7,16 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.project.sharedcustodycalendar.model.User
 import com.project.sharedcustodycalendar.objects.CalendarParameters
 import com.project.sharedcustodycalendar.objects.FamilyDataHolder
 import com.project.sharedcustodycalendar.utils.CalendarUIUtils
 import com.project.sharedcustodycalendar.views.TriangleToggleCell
 import com.project.sharedcustodycalendar.utils.CalendarStorageUtils
+import com.project.sharedcustodycalendar.utils.FirebaseUtils
 import java.util.Calendar
 
 class CalendarActivity :  AppCompatActivity() {
-    private lateinit var titleTextView: TextView
     private lateinit var legendLayout: LinearLayout
 
     private lateinit var prevMonthBtn: Button
@@ -29,15 +30,25 @@ class CalendarActivity :  AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_calendar)
 
-        titleTextView = findViewById(R.id.titleTextView)
+        var titleTextView: TextView = findViewById(R.id.titleTextView)
+        var childTextView: TextView = findViewById(R.id.childID_textView)
+        var viewerTokenTextView: TextView = findViewById(R.id.viewerToken_textView)
         legendLayout = findViewById(R.id.legendLayout)
 
         prevMonthBtn = findViewById(R.id.prevMonthBtn)
         nextMonthBtn = findViewById(R.id.nextMonthBtn)
         saveButton = findViewById(R.id.saveButton)
 
+        params.activeChild?.copyOriginalCalendar()
+        params.activeChild?.createModifiedCalendar()
+
         saveButton.setOnClickListener {
             CalendarStorageUtils.saveLocally(this)
+            FirebaseUtils.saveActiveChild()
+            User.addChildPermission(params.activeChild?.childID ?: "000000",0)
+            if (params.activeChild?.parentConfirmed == true) {
+                params.activeChild?.getCalendarChanges()
+            }
             startActivity(Intent(this, DashboardActivity::class.java))
         }
 
@@ -65,7 +76,9 @@ class CalendarActivity :  AppCompatActivity() {
         val activeChildName = params.activeChild?.childName ?: "Unknown"
         val activeChildToken = params.activeChild?.childID ?: ""
 
-        titleTextView.text = "Calendar for $activeChildName ($activeChildToken)"
+        titleTextView.text = "Calendar for $activeChildName"
+        childTextView.text = "Child Token (token allows to edit): $activeChildToken"
+        viewerTokenTextView.text = "Viewer Token (token only allows to view ): ${params.activeChild?.getViewerToken()}"
 
         // draw legend
         CalendarUIUtils.drawLegend(this@CalendarActivity, legendLayout)

@@ -28,8 +28,8 @@ class MainActivity : AppCompatActivity() {
             User.setUserID()
             Log.d("MainActivity", "User is already signed in: ${currentUser.email}")
             // Go directly to Dashboard
-
             CalendarStorageUtils.loadLocally(this)
+            CalendarStorageUtils.syncAll()
             startActivity(Intent(this, DashboardActivity::class.java))
             finish()
         } else {

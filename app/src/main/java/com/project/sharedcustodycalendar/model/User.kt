@@ -6,6 +6,11 @@ import com.google.gson.Gson
 
 object User {
 
+    /* Permissions
+    0 : parent 1
+    1 : parent 2
+    2 : viewer
+     */
     data class UserData(
         var userID: String = "",
         var childPermissions: MutableMap<String, Int> = mutableMapOf()

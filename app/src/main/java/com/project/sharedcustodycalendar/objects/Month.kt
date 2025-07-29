@@ -8,10 +8,11 @@ import org.json.JSONArray
 data class Month(
     var monthId: Int = 0,
     var starting_parent: Int = 0,
-    var parent0_nights: MutableList<Int>
+    var parent0_nights: MutableList<Int>,
+    var changes : MutableList<pendingChanges> = mutableListOf<pendingChanges>()
 ) {
     // for Firebase
-    constructor() : this(0, 0, mutableListOf())
+    constructor() : this(0, 0, mutableListOf(), mutableListOf())
 
     fun toJson(): JSONObject{
         val json = JSONObject()
@@ -31,6 +32,9 @@ data class Month(
         }
     }
 
+    fun addChange(change: pendingChanges) {
+        changes.add(change)
+    }
 
     fun updateParent0Nights(day:Int, newParent: Int =-1) : Int {
         if (newParent != -1) {
@@ -65,5 +69,52 @@ data class Month(
             }
         }
     }
+
+    fun deepCopy(): Month {
+        return Month(
+            monthId = this.monthId,
+            starting_parent = this.starting_parent,
+            parent0_nights = this.parent0_nights.toMutableList(),
+            changes = this.changes.map { it.copy() }.toMutableList()
+        )
+    }
+
+    fun resolvePendingChanges()  {
+        val result = mutableListOf<pendingChanges>()
+
+        // Group all changes by night (inside a single month)
+        val grouped = changes.groupBy { it.night }
+
+        for ((_, sameNightChanges) in grouped) {
+            // If any approved, skip this night entirely (already reflected in calendar)
+            if (sameNightChanges.any { it.status == "approved" }) {
+                continue
+            }
+
+            val pending = sameNightChanges.filter { it.status == "pending" }
+            val rejected = sameNightChanges.filter { it.status == "rejected" }
+
+            when {
+                pending.size >= 2 -> {
+                    // Both parents proposed same night → keep the latest
+                    val latest = pending.maxByOrNull { it.timsStamp }!!
+                    result.add(latest.copy(status = "pending"))
+                }
+                pending.size == 1 && rejected.isNotEmpty() -> {
+                    // One parent proposed, other rejected → keep the pending
+                    result.add(pending[0])
+                }
+                pending.size == 1 -> {
+                    result.add(pending[0])
+                }
+                rejected.size > 0  -> {
+                    val latest = rejected.maxByOrNull { it.timsStamp }!!
+                    result.add(latest)
+                }
+            }
+        }
+        changes = result
+    }
+
 
 }

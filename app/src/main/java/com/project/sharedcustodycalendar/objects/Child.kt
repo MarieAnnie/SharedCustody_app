@@ -1,5 +1,7 @@
 package com.project.sharedcustodycalendar.objects
 
+import com.project.sharedcustodycalendar.CalendarActivity
+import com.project.sharedcustodycalendar.model.User
 import com.project.sharedcustodycalendar.utils.FirebaseUtils
 import com.project.sharedcustodycalendar.utils.GenerateCalendar
 import org.json.JSONArray
@@ -14,12 +16,14 @@ import java.util.Calendar
 
 data class Child(
     var childName: String = "",
-    var viewerToken: String = "",
     var childID: String = "",
     var parents: List<Parent> = emptyList(),
     var schedulePattern: List<Int> = emptyList(),
     var hour_parent_switch: String = "08:00",
-    var years: MutableMap<String, MutableList<Month>> = mutableMapOf()
+    var years: MutableMap<String, MutableList<Month>> = mutableMapOf(),
+    var originalCalendar : MutableMap<String, MutableList<Month>> = mutableMapOf(),
+    var modifiedCalendar : MutableMap<String, MutableList<Month>> = mutableMapOf(),
+    var parentConfirmed: Boolean = false
 ) {
 
     fun toJson(): JSONObject {
@@ -61,8 +65,12 @@ data class Child(
         return years[year]?.map { it.monthId } ?: emptyList()
     }
 
-    fun getParent0EveningSchedule(year: String, monthIdx: Int ): List<Int> {
-        val month = years[year]?.find { it.monthId == monthIdx }
+    fun getParent0EveningSchedule(year: String, monthIdx: Int, isCalendarActivity: Boolean = false ): List<Int> {
+        val month = if (isCalendarActivity) {
+            modifiedCalendar[year]?.find { it.monthId == monthIdx }
+        } else {
+            years[year]?.find { it.monthId == monthIdx }
+        }
         return month?.parent0_nights ?: emptyList()
     }
 
@@ -119,11 +127,8 @@ data class Child(
 
     }
 
-    fun getViewerID(): String {
-        if (viewerToken.isEmpty()) {
-            viewerToken = IDEncoder.encodeViewerID(childID)
-        }
-        return viewerToken
+    fun getViewerToken(): String {
+        return IDEncoder.encodeViewerID(childID)
     }
 
     fun isContinuous(sequence: List<Int>): Boolean {
@@ -138,4 +143,73 @@ data class Child(
         return true
     }
 
+    fun parentHasConfirmed(){
+        parentConfirmed = true
+    }
+
+    fun copyOriginalCalendar(){
+        val copy = mutableMapOf<String, MutableList<Month>>()
+
+        for ((year, months) in years) {
+            val copiedMonths = months.map { it.deepCopy() }.toMutableList()
+            copy[year] = copiedMonths
+        }
+
+        originalCalendar = copy
+    }
+
+    fun getCalendarChanges ( ) {
+        for ((year, months) in years) {
+            val originalMonths = originalCalendar[year] ?: continue
+
+            for ((index, editedMonth) in months.withIndex()) {
+                val originalMonth = originalMonths.getOrNull(index) ?: continue
+
+                val allDays = (1..31)
+                for (day in allDays) {
+                    val wasParent0 = originalMonth.parent0_nights.contains(day)
+                    val isParent0 = editedMonth.parent0_nights.contains(day)
+
+                    if (wasParent0 != isParent0) {
+                        val proposedNewParent = if (isParent0) 0 else 1
+                        val change = pendingChanges(
+                            year = year.toInt(),
+                            monthInt = originalMonth.monthId,
+                            night = day,
+                            proposedByParent = User.userData.childPermissions[childID],
+                            newParent = proposedNewParent
+                        )
+                        originalMonth.addChange(change)
+                    }
+                }
+            }
+        }
+        resolvePendingChanges()
+    }
+
+    fun resolvePendingChanges() {
+        for ((_, months) in years) {
+            for (month in months) {
+                month.resolvePendingChanges()
+            }
+        }
+    }
+
+
+    fun createModifiedCalendar(){
+        val copy = mutableMapOf<String, MutableList<Month>>()
+        for ((year, months) in years) {
+            copy[year] = mutableListOf<Month>()
+            for (month in months) {
+                var monthCopy = month.deepCopy()
+                for (change in month.changes) {
+                    if (change.showOnCalendarToModify()) {
+                        monthCopy.updateParent0Nights(change.night, change.newParent)
+                    }
+                }
+                copy[year]?.add(monthCopy)
+            }
+        }
+        modifiedCalendar = copy
+    }
 }

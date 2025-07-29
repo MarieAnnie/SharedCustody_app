@@ -3,10 +3,13 @@ package com.project.sharedcustodycalendar
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.project.sharedcustodycalendar.model.User
 import com.project.sharedcustodycalendar.objects.CalendarParameters
 import com.project.sharedcustodycalendar.objects.Child
@@ -19,6 +22,8 @@ import java.util.*
 
 class DashboardActivity : AppCompatActivity() {
 
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+    private lateinit var syncCalendarButton: Button
 
     private lateinit var legendLayout: LinearLayout
     private lateinit var prevMonthBtn: Button
@@ -33,6 +38,30 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var params: CalendarParameters
 
     private var activeChild: Child? = null
+
+    private fun onRefresh() {
+
+        CalendarStorageUtils.loadLocally(this)  // Or your own function
+
+        // Simulate refresh delay
+        Handler(Looper.getMainLooper()).postDelayed({
+            swipeRefreshLayout.isRefreshing = false  // Hide refresh spinner
+        }, 1500)
+
+        val currentChild = FamilyDataHolder.familyData.activeChild
+        modifyButton.visibility = View.GONE
+
+        if (currentChild != null && User.userData.childPermissions[currentChild.childID] in listOf(0, 1)) {
+            modifyButton.visibility = View.VISIBLE
+            modifyButton.setOnClickListener {
+                startActivity(Intent(this, CalendarActivity::class.java))
+            }
+        } else {
+            modifyButton.setOnClickListener(null)
+        }
+
+        swipeRefreshLayout.isRefreshing = false
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,14 +78,28 @@ class DashboardActivity : AppCompatActivity() {
         deleteChildButton = findViewById(R.id.deleteChildButton)
         modifyButton = findViewById(R.id.modifyButton)
 
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
+        syncCalendarButton = findViewById(R.id.sync)
+
+        //TODO
+        swipeRefreshLayout.setOnRefreshListener {
+            onRefresh()
+        }
+
+        // Optional: set refresh indicator colors
+        swipeRefreshLayout.setColorSchemeResources(
+            R.color.teal_200,
+            R.color.purple_500,
+            R.color.black
+        )
+
         modifyButton.visibility = View.GONE
 
         activeChild = FamilyDataHolder.familyData.activeChild
         val currentChild = FamilyDataHolder.familyData.activeChild
 
-        modifyButton.visibility = View.GONE
 
-        if (currentChild != null && User.userData.childPermissions[currentChild.childID] == 0) {
+        if (currentChild != null && User.userData.childPermissions[currentChild.childID] in listOf(0, 1)) {
             modifyButton.visibility = View.VISIBLE
             modifyButton.setOnClickListener {
                 startActivity(Intent(this, CalendarActivity::class.java))
@@ -69,6 +112,13 @@ class DashboardActivity : AppCompatActivity() {
         val today = Calendar.getInstance()
         val dateFormat = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
         todayTextView.text = "Today is ${dateFormat.format(today.time)}"
+
+        // Sync Calendar Button
+        syncCalendarButton.setOnClickListener {
+            CalendarStorageUtils.syncAll()
+            CalendarStorageUtils.saveLocally(this)
+            recreate()
+        }
 
         // Handle add button
         addChildButton.setOnClickListener {
