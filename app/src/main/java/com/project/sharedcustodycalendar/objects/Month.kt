@@ -9,7 +9,7 @@ data class Month(
     var monthId: Int = 0,
     var starting_parent: Int = 0,
     var parent0_nights: MutableList<Int>,
-    var changes : MutableList<pendingChanges> = mutableListOf<pendingChanges>()
+    var changes : MutableList<PendingChanges> = mutableListOf<PendingChanges>()
 ) {
     // for Firebase
     constructor() : this(0, 0, mutableListOf(), mutableListOf())
@@ -32,7 +32,7 @@ data class Month(
         }
     }
 
-    fun addChange(change: pendingChanges) {
+    fun addChange(change: PendingChanges) {
         changes.add(change)
     }
 
@@ -80,25 +80,25 @@ data class Month(
     }
 
     fun resolvePendingChanges()  {
-        val result = mutableListOf<pendingChanges>()
+        val result = mutableListOf<PendingChanges>()
 
         // Group all changes by night (inside a single month)
         val grouped = changes.groupBy { it.night }
 
         for ((_, sameNightChanges) in grouped) {
             // If any approved, skip this night entirely (already reflected in calendar)
-            if (sameNightChanges.any { it.status == "approved" }) {
+            if (sameNightChanges.any { it.isApproved() }) {
                 continue
             }
 
-            val pending = sameNightChanges.filter { it.status == "pending" }
-            val rejected = sameNightChanges.filter { it.status == "rejected" }
+            val pending = sameNightChanges.filter { it.isPending() }
+            val rejected = sameNightChanges.filter { it.isRejected()}
 
             when {
                 pending.size >= 2 -> {
                     // Both parents proposed same night → keep the latest
                     val latest = pending.maxByOrNull { it.timsStamp }!!
-                    result.add(latest.copy(status = "pending"))
+                    result.add(latest.copy(status = ChangeStatus.PENDING))
                 }
                 pending.size == 1 && rejected.isNotEmpty() -> {
                     // One parent proposed, other rejected → keep the pending
@@ -116,5 +116,11 @@ data class Month(
         changes = result
     }
 
-
+    fun applyChanges() {
+        for (change in changes) {
+            if (change.isToBeDeleted()) {
+                changes.remove(change)
+            }
+        }
+    }
 }

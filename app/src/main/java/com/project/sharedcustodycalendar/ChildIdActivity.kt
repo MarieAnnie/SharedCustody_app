@@ -45,7 +45,7 @@ class ChildIdActivity :  AppCompatActivity() {
                 }
                 else {
                     viewerID = IDEncoder.encodeViewerID(idInput)
-                    permission = 0
+                    permission = -1
                 }
 
                 FirebaseUtils.loadChild(childID) { child ->
@@ -61,16 +61,24 @@ class ChildIdActivity :  AppCompatActivity() {
                         // Set active child
                         FamilyDataHolder.familyData.setActiveChild(child.childID)
 
-                        // Optionally save locally after update
-                        CalendarStorageUtils.saveLocally(this)
-                        if( permission == 0) {
-                            whichParentWindow(child)
+                        if (permission == -1) {
+                            whichParentWindow(child) { selectedPermission ->
+                                permission = selectedPermission
+
+                                User.addChildPermission(childID, permission)
+                                CalendarStorageUtils.saveLocally(this)
+                                FirebaseUtils.saveUserPermission()
+
+                                startActivity(Intent(this, DashboardActivity::class.java))
+                            }
+                        } else {
+                            // permission is already set (e.g., 2), proceed directly
+                            User.addChildPermission(childID, permission)
+                            CalendarStorageUtils.saveLocally(this)
+                            FirebaseUtils.saveUserPermission()
+
+                            startActivity(Intent(this, DashboardActivity::class.java))
                         }
-
-                        User.addChildPermission(childID, permission)
-                        FirebaseUtils.saveUserPermission()
-
-                        startActivity(Intent(this, DashboardActivity::class.java))
                     } else {
                         Log.e("Firebase", "Child not found.")
                     }
@@ -94,25 +102,20 @@ class ChildIdActivity :  AppCompatActivity() {
         }
     }
 
-    fun whichParentWindow(child: Child){
-            val parent0Name = child.parents.getOrNull(0)?.name ?: "Parent 1"
-            val parent1Name = child.parents.getOrNull(1)?.name ?: "Parent 2"
+    fun whichParentWindow(child: Child, onParentChosen: (Int) -> Unit) {
+        val parent0Name = child.parents.getOrNull(0)?.name ?: "Parent 1"
+        val parent1Name = child.parents.getOrNull(1)?.name ?: "Parent 2"
 
-            val builder = AlertDialog.Builder(this)
-            builder.setTitle("Who are you?")
-
-            builder.setMessage("Select your name:")
-
-            builder.setPositiveButton(parent0Name) { _, _ ->
-                permission = 0
-            }
-
-            builder.setNegativeButton(parent1Name) { _, _ ->
-                permission = 1
+        AlertDialog.Builder(this)
+            .setTitle("Who are you?")
+            .setMessage("Select your name:")
+            .setPositiveButton(parent0Name) { _, _ -> onParentChosen(0) }
+            .setNegativeButton(parent1Name) { _, _ ->
+                onParentChosen(1)
                 FamilyDataHolder.familyData.activeChild?.parentHasConfirmed()
             }
-
-            builder.setCancelable(false)
-            builder.show()
+            .setCancelable(false)
+            .show()
     }
+
 }

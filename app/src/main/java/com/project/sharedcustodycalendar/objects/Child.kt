@@ -1,6 +1,5 @@
 package com.project.sharedcustodycalendar.objects
 
-import com.project.sharedcustodycalendar.CalendarActivity
 import com.project.sharedcustodycalendar.model.User
 import com.project.sharedcustodycalendar.utils.FirebaseUtils
 import com.project.sharedcustodycalendar.utils.GenerateCalendar
@@ -172,9 +171,9 @@ data class Child(
 
                     if (wasParent0 != isParent0) {
                         val proposedNewParent = if (isParent0) 0 else 1
-                        val change = pendingChanges(
+                        val change = PendingChanges(
                             year = year.toInt(),
-                            monthInt = originalMonth.monthId,
+                            monthId = originalMonth.monthId,
                             night = day,
                             proposedByParent = User.userData.childPermissions[childID],
                             newParent = proposedNewParent

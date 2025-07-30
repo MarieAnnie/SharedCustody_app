@@ -5,7 +5,6 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <ScrollView
-        xmlns:android="http://schemas.android.com/apk/res/android"
         android:fitsSystemWindows="true"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -16,13 +15,35 @@
             android:layout_height="wrap_content"
             android:padding="8dp">
 
-            <!-- Centered Modify Button -->
-            <Button
-                android:id="@+id/sync"
-                android:layout_width="wrap_content"
+        <!-- Title and + button -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="Sync Calendar" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+
+                <!-- Centered Modify Button -->
+                <Button
+                    android:id="@+id/sync"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sync Calendar" />
+
+                <!-- Spacer that pushes the second button to the right -->
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+
+                <Button
+                    android:id="@+id/changes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Review Changes" />
+
+            </LinearLayout>
 
             <!-- Title and + button -->
             <LinearLayout
@@ -68,6 +89,7 @@
                         android:layout_width="40dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="5dp" />
+
                 </LinearLayout>
 
             </LinearLayout>

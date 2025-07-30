@@ -24,6 +24,7 @@ class DashboardActivity : AppCompatActivity() {
 
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var syncCalendarButton: Button
+    private lateinit var reviewChangesButton: Button
 
     private lateinit var legendLayout: LinearLayout
     private lateinit var prevMonthBtn: Button
@@ -80,6 +81,7 @@ class DashboardActivity : AppCompatActivity() {
 
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
         syncCalendarButton = findViewById(R.id.sync)
+        reviewChangesButton = findViewById(R.id.changes)
 
         //TODO
         swipeRefreshLayout.setOnRefreshListener {
@@ -118,6 +120,11 @@ class DashboardActivity : AppCompatActivity() {
             CalendarStorageUtils.syncAll()
             CalendarStorageUtils.saveLocally(this)
             recreate()
+        }
+
+        // Review Changes Button
+        reviewChangesButton.setOnClickListener {
+            startActivity(Intent(this, ReviewChangesActivity::class.java))
         }
 
         // Handle add button
