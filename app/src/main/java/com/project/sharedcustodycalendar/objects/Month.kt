@@ -19,43 +19,52 @@ data class Month(
         json.put("monthId", monthId)
         json.put("starting_parent", starting_parent)
         json.put("parent0_nights", JSONArray(parent0_nights))
+
+        val changesArray = JSONArray()
+        for (change in changes) {
+            changesArray.put(change.toJson())  // Assuming PendingChanges has toJson()
+        }
+        json.put("changes", changesArray)
+
         return json
     }
 
     companion object {
         fun fromJson(json: JSONObject): Month {
-            return Month(
+            val month = Month(
                 monthId = json.getInt("monthId"),
                 starting_parent = json.getInt("starting_parent"),
-                parent0_nights = json.getJSONArray("parent0_nights").toIntList() as MutableList<Int>
+                parent0_nights = json.getJSONArray("parent0_nights").toIntList().toMutableList()
             )
+
+            val changesArray = json.optJSONArray("changes")
+            if (changesArray != null) {
+                for (i in 0 until changesArray.length()) {
+                    month.changes.add(PendingChanges.fromJson(changesArray.getJSONObject(i)))
+                }
+            }
+
+            return month
         }
     }
 
     fun addChange(change: PendingChanges) {
-        changes.add(change)
+        if (!changes.any { it.night == change.night && it.proposedByParent == change.proposedByParent && it.status == ChangeStatus.PENDING }) {
+            changes.add(change)
+        }
     }
 
-    fun updateParent0Nights(day:Int, newParent: Int =-1) : Int {
-        if (newParent != -1) {
-            if (parent0_nights.contains(day)) {
-                parent0_nights.remove(day)
-            } else {
-                parent0_nights.add(day)
-            }
+    fun updateParent0Nights(day: Int, newParent: Int = -1): Int {
+        if (newParent == -1) return -1
+
+        if (newParent == 0) {
+            if (!parent0_nights.contains(day)) parent0_nights.add(day)
+        } else {
+            parent0_nights.remove(day)
         }
-        else {
-            if (newParent == 0) {
-                parent0_nights.add(day)
-            } else {
-                parent0_nights.remove(day)
-            }
-        }
-        // Keep the list sorted
+
         parent0_nights.sort()
-
         return if (parent0_nights.contains(day)) 0 else 1
-
     }
 
     fun updateStartingParent(newStartingParent: Int=-1) {
@@ -79,6 +88,10 @@ data class Month(
         )
     }
 
+    fun hasPendingChangeFor(day: Int, parent: Int): Boolean {
+        return changes.any { it.night == day && it.proposedByParent == parent && it.isPending() }
+    }
+
     fun resolvePendingChanges()  {
         val result = mutableListOf<PendingChanges>()
 
@@ -97,7 +110,7 @@ data class Month(
             when {
                 pending.size >= 2 -> {
                     // Both parents proposed same night → keep the latest
-                    val latest = pending.maxByOrNull { it.timsStamp }!!
+                    val latest = pending.maxByOrNull { it.timeStamp }!!
                     result.add(latest.copy(status = ChangeStatus.PENDING))
                 }
                 pending.size == 1 && rejected.isNotEmpty() -> {
@@ -108,7 +121,7 @@ data class Month(
                     result.add(pending[0])
                 }
                 rejected.size > 0  -> {
-                    val latest = rejected.maxByOrNull { it.timsStamp }!!
+                    val latest = rejected.maxByOrNull { it.timeStamp }!!
                     result.add(latest)
                 }
             }
@@ -117,10 +130,6 @@ data class Month(
     }
 
     fun applyChanges() {
-        for (change in changes) {
-            if (change.isToBeDeleted()) {
-                changes.remove(change)
-            }
-        }
+        changes = changes.filterNot { it.isToBeDeleted() }.toMutableList()
     }
 }

@@ -50,15 +50,31 @@ class DashboardActivity : AppCompatActivity() {
         }, 1500)
 
         val currentChild = FamilyDataHolder.familyData.activeChild
-        modifyButton.visibility = View.GONE
+        val currentParent = User.userData.childPermissions[currentChild?.childID]
 
+        // Default: hide the button
+        modifyButton.visibility = View.GONE
+        modifyButton.setOnClickListener(null)
+
+        // Only visible to parents 0 or 1
         if (currentChild != null && User.userData.childPermissions[currentChild.childID] in listOf(0, 1)) {
             modifyButton.visibility = View.VISIBLE
+
+            // Check if there are pending approvals (changes proposed by the other parent)
+            val hasPendingApprovals = currentChild.officialCalendar.values
+                ?.flatten()  // get all months
+                ?.flatMap { it.changes }
+                ?.any { it.proposedByParent != currentParent && it.isPending() } == true
+
+            // Redirect to the right page based on pending approvals
             modifyButton.setOnClickListener {
-                startActivity(Intent(this, CalendarActivity::class.java))
+                val intent = if (hasPendingApprovals) {
+                    Intent(this, ReviewChangesActivity::class.java)
+                } else {
+                    Intent(this, CalendarActivity::class.java)
+                }
+                startActivity(intent)
             }
-        } else {
-            modifyButton.setOnClickListener(null)
         }
 
         swipeRefreshLayout.isRefreshing = false
@@ -98,16 +114,27 @@ class DashboardActivity : AppCompatActivity() {
         modifyButton.visibility = View.GONE
 
         activeChild = FamilyDataHolder.familyData.activeChild
-        val currentChild = FamilyDataHolder.familyData.activeChild
+        val activeChild = FamilyDataHolder.familyData.activeChild
 
 
-        if (currentChild != null && User.userData.childPermissions[currentChild.childID] in listOf(0, 1)) {
+        if (activeChild != null && User.userData.childPermissions[activeChild.childID] in listOf(0, 1)) {
             modifyButton.visibility = View.VISIBLE
             modifyButton.setOnClickListener {
-                startActivity(Intent(this, CalendarActivity::class.java))
+                if (hasPendingChangesToApprove()) {
+                    Toast.makeText(
+                        this,
+                        "Please review all the pending changes from the other parent before doing new modifications.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    // Show pending changes to approve first
+                    startActivity(Intent(this, ReviewChangesActivity::class.java))
+                } else {
+                    // No pending changes → safe to load the editable calendar
+                    startActivity(Intent(this, CalendarActivity::class.java))
+                }
             }
         } else {
-            modifyButton.setOnClickListener(null)
+            modifyButton.isEnabled = false
         }
 
         // Set today's date
@@ -225,6 +252,22 @@ class DashboardActivity : AppCompatActivity() {
                 showCurrentChild()
             }
             .show()
+    }
+
+    private fun hasPendingChangesToApprove(): Boolean {
+        val currentParent = User.userData.childPermissions[FamilyDataHolder.familyData.activeChild?.childID] ?: return false
+        val activeChild = FamilyDataHolder.familyData.activeChild ?: return false
+
+        for ((_, months) in activeChild.officialCalendar) {
+            for (month in months) {
+                for (change in month.changes) {
+                    if (change.isPending() && change.proposedByParent != currentParent) {
+                        return true
+                    }
+                }
+            }
+        }
+        return false
     }
 
 }

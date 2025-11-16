@@ -82,12 +82,16 @@ object CalendarUIUtils {
 
         var hasMonthData = false
         var parent0EveningSchedule = listOf<Int>()
-        val activeChild = params.activeChild
+        val activeChild = params.activeChild ?: return  // early exit
 
-        if (activeChild != null) {
-            parent0EveningSchedule = activeChild.getParent0EveningSchedule(params.year.toString(), params.month, params.isCalendarActivity)
-            hasMonthData = activeChild.years[params.year.toString()]?.any { it.monthId == params.month } == true
+        val calendarMap = when {
+            params.isCalendarActivity -> activeChild.modifiedCalendar
+            else -> activeChild.officialCalendar
         }
+
+        val month = calendarMap[params.year.toString()]?.find { it.monthId == params.month }
+        parent0EveningSchedule = month?.parent0_nights ?: emptyList()
+        hasMonthData = month != null
 
         val eveningSchedule = if (hasMonthData) {
             MutableList(daysInMonth) { 1 }.apply {
@@ -99,9 +103,9 @@ object CalendarUIUtils {
             MutableList(daysInMonth) { -1 }
         }
 
-        val morningSchedule = if (hasMonthData && activeChild != null) {
+        val morningSchedule = if (hasMonthData) {
             MutableList(daysInMonth) { 0 }.apply {
-                this[0] = activeChild.getStartingParent(params.year.toString(), params.month)
+                this[0] = activeChild.getStartingParent(calendarMap, params.year.toString(), params.month)
                 for (i in 0 until daysInMonth - 1) {
                     this[i + 1] = eveningSchedule[i]
                 }
@@ -135,14 +139,18 @@ object CalendarUIUtils {
             params.calendarGrid.addView(emptyView)
         }
 
+        // Make copies so that cell clicks do not mutate the original lists
+        val eveningScheduleCopy = eveningSchedule.toMutableList()
+        val morningScheduleCopy = morningSchedule.toMutableList()
+
         // Add each day cell
         for (day in 1..daysInMonth) {
             val index = day - 1
             val cell = TriangleToggleCell(
                 context = params.context,
                 index = index,
-                morningSchedule = morningSchedule,
-                eveningSchedule = eveningSchedule,
+                morningSchedule = morningScheduleCopy,
+                eveningSchedule = eveningScheduleCopy,
                 totalDays = daysInMonth,
                 cellViews = params.cellViews
             )

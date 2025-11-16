@@ -1,5 +1,6 @@
 package com.project.sharedcustodycalendar.objects
 
+import android.util.Log
 import com.project.sharedcustodycalendar.model.User
 import com.project.sharedcustodycalendar.utils.FirebaseUtils
 import com.project.sharedcustodycalendar.utils.GenerateCalendar
@@ -19,8 +20,7 @@ data class Child(
     var parents: List<Parent> = emptyList(),
     var schedulePattern: List<Int> = emptyList(),
     var hour_parent_switch: String = "08:00",
-    var years: MutableMap<String, MutableList<Month>> = mutableMapOf(),
-    var originalCalendar : MutableMap<String, MutableList<Month>> = mutableMapOf(),
+    var officialCalendar : MutableMap<String, MutableList<Month>> = mutableMapOf(),
     var modifiedCalendar : MutableMap<String, MutableList<Month>> = mutableMapOf(),
     var parentConfirmed: Boolean = false
 ) {
@@ -32,7 +32,7 @@ data class Child(
         json.put("parents", JSONArray(parents.map { it.toJson() }))
         json.put("schedulePattern", JSONArray(schedulePattern))
         json.put("hour_parent_switch", hour_parent_switch)
-        json.put("years", mapToJson(years))
+        json.put("officialCalendar", mapToJson(officialCalendar))
         return json
     }
 
@@ -42,11 +42,11 @@ data class Child(
         parents = json.getJSONArray("parents").map { Parent.fromJson(it as JSONObject) }
         schedulePattern = json.getJSONArray("schedulePattern").toIntList()
         hour_parent_switch = json.getString("hour_parent_switch")
-        years = json.getJSONObject("years").toMonthMap().toMutableMap()
+        officialCalendar = json.getJSONObject("officialCalendar").toMonthMap().toMutableMap()
     }
 
     fun setOrUpdateMonth(year: String, newMonth: Month) {
-        val yearMonths = years.getOrPut(year) { mutableListOf() }
+        val yearMonths = officialCalendar.getOrPut(year) { mutableListOf() }
 
         val existingIndex = yearMonths.indexOfFirst { it.monthId == newMonth.monthId }
         if (existingIndex != -1) {
@@ -57,24 +57,15 @@ data class Child(
             yearMonths.add(newMonth)
         }
 
-        years[year] = yearMonths
+        officialCalendar[year] = yearMonths
     }
 
     fun getMonthIdsForYear(year: String): List<Int> {
-        return years[year]?.map { it.monthId } ?: emptyList()
-    }
-
-    fun getParent0EveningSchedule(year: String, monthIdx: Int, isCalendarActivity: Boolean = false ): List<Int> {
-        val month = if (isCalendarActivity) {
-            modifiedCalendar[year]?.find { it.monthId == monthIdx }
-        } else {
-            years[year]?.find { it.monthId == monthIdx }
-        }
-        return month?.parent0_nights ?: emptyList()
+        return officialCalendar[year]?.map { it.monthId } ?: emptyList()
     }
 
     fun changeParentNight(year: String, monthIdx: Int, day: Int, newParent: Int = -1) {
-        val month = years[year]?.find { it.monthId == monthIdx }
+        val month = modifiedCalendar[year]?.find { it.monthId == monthIdx }
         var updatedParent = month?.updateParent0Nights(day, newParent)
         if (updatedParent == null) {
             updatedParent = 0
@@ -87,21 +78,21 @@ data class Child(
         if (day == daysInMonth) {
             if (monthIdx == 12) {
                 val nextYear = (year.toInt() + 1).toString()
-                val nextMonth = years[nextYear]?.find { it.monthId == 1 }
+                val nextMonth = modifiedCalendar[nextYear]?.find { it.monthId == 1 }
                 if (nextMonth != null) {
                     nextMonth.updateParent0Nights(day, newParent)
                 } else {
                     initializeCalendar(nextYear.toInt(), 1, updatedParent)
                 }
             }else {
-                val nextMonth = years[year]?.find { it.monthId == monthIdx +1 }
+                val nextMonth = modifiedCalendar[year]?.find { it.monthId == monthIdx +1 }
                 nextMonth?.updateStartingParent(newParent)
             }
         }
     }
 
-    fun getStartingParent(year: String, monthIdx: Int ): Int {
-        val month = years[year]?.find { it.monthId == monthIdx }
+    fun getStartingParent(calendar : MutableMap<String, MutableList<Month>>, year: String, monthIdx: Int ): Int {
+        val month = calendar[year]?.find { it.monthId == monthIdx }
         return month?.starting_parent ?: 0
     }
 
@@ -111,7 +102,7 @@ data class Child(
 
         var monthIndexes = emptyList<Int>()
 
-        if (years.containsKey(year.toString())) {
+        if (officialCalendar.containsKey(year.toString())) {
             monthIndexes = getMonthIdsForYear(year.toString())
         }
 
@@ -146,48 +137,54 @@ data class Child(
         parentConfirmed = true
     }
 
-    fun copyOriginalCalendar(){
-        val copy = mutableMapOf<String, MutableList<Month>>()
 
-        for ((year, months) in years) {
-            val copiedMonths = months.map { it.deepCopy() }.toMutableList()
-            copy[year] = copiedMonths
-        }
-
-        originalCalendar = copy
-    }
-
-    fun getCalendarChanges ( ) {
-        for ((year, months) in years) {
-            val originalMonths = originalCalendar[year] ?: continue
+    fun getCalendarChanges() {
+        for ((year, months) in modifiedCalendar) {
+            val officialMonths = officialCalendar[year] ?: continue
 
             for ((index, editedMonth) in months.withIndex()) {
-                val originalMonth = originalMonths.getOrNull(index) ?: continue
+                val officialMonth = officialMonths.getOrNull(index) ?: continue
 
                 val allDays = (1..31)
                 for (day in allDays) {
-                    val wasParent0 = originalMonth.parent0_nights.contains(day)
+                    val wasParent0 = officialMonth.parent0_nights.contains(day)
                     val isParent0 = editedMonth.parent0_nights.contains(day)
 
                     if (wasParent0 != isParent0) {
                         val proposedNewParent = if (isParent0) 0 else 1
-                        val change = PendingChanges(
-                            year = year.toInt(),
-                            monthId = originalMonth.monthId,
-                            night = day,
-                            proposedByParent = User.userData.childPermissions[childID],
-                            newParent = proposedNewParent
-                        )
-                        originalMonth.addChange(change)
+
+                        // Check for existing pending change
+                        val alreadyExists = officialMonth.changes.any {
+                            it.night == day &&
+                                    it.monthId == officialMonth.monthId &&
+                                    it.year == year.toInt() &&
+                                    it.proposedByParent == User.userData.childPermissions[childID] &&
+                                    it.isPending()
+                        }
+
+                        if (!alreadyExists) {
+                            val change = PendingChanges(
+                                year = year.toInt(),
+                                monthId = officialMonth.monthId,
+                                night = day,
+                                proposedByParent = User.userData.childPermissions[childID],
+                                newParent = proposedNewParent
+                            )
+                            officialMonth.addChange(change)
+                        }
                     }
+                }
+                for (change in officialMonth.changes) {
+                    Log.d("CalendarActivity", "Change: $change")
                 }
             }
         }
-        resolvePendingChanges()
     }
 
+
+
     fun resolvePendingChanges() {
-        for ((_, months) in years) {
+        for ((_, months) in modifiedCalendar) {
             for (month in months) {
                 month.resolvePendingChanges()
             }
@@ -195,12 +192,13 @@ data class Child(
     }
 
 
-    fun createModifiedCalendar(){
+    fun createModifiedCalendar() {
         val copy = mutableMapOf<String, MutableList<Month>>()
-        for ((year, months) in years) {
-            copy[year] = mutableListOf<Month>()
+        for ((year, months) in officialCalendar) {
+            copy[year] = mutableListOf()
             for (month in months) {
-                var monthCopy = month.deepCopy()
+                val monthCopy = month.deepCopy()
+                // Apply only pending changes for this month
                 for (change in month.changes) {
                     if (change.showOnCalendarToModify()) {
                         monthCopy.updateParent0Nights(change.night, change.newParent)
@@ -210,5 +208,9 @@ data class Child(
             }
         }
         modifiedCalendar = copy
+    }
+
+    fun deleteModifiedCalendar(){
+        modifiedCalendar.clear()
     }
 }

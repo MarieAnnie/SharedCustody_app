@@ -2,6 +2,7 @@ package com.project.sharedcustodycalendar
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 
 import android.widget.LinearLayout
@@ -39,19 +40,6 @@ class CalendarActivity :  AppCompatActivity() {
         nextMonthBtn = findViewById(R.id.nextMonthBtn)
         saveButton = findViewById(R.id.saveButton)
 
-        params.activeChild?.copyOriginalCalendar()
-        params.activeChild?.createModifiedCalendar()
-
-        saveButton.setOnClickListener {
-            CalendarStorageUtils.saveLocally(this)
-            FirebaseUtils.saveActiveChild()
-            User.addChildPermission(params.activeChild?.childID ?: "000000",0)
-            if (params.activeChild?.parentConfirmed == true) {
-                params.activeChild?.getCalendarChanges()
-            }
-            startActivity(Intent(this, DashboardActivity::class.java))
-        }
-
         // Show today's date
         val today = Calendar.getInstance()
 
@@ -66,6 +54,21 @@ class CalendarActivity :  AppCompatActivity() {
             context = this,
             isCalendarActivity = true
         )
+
+        saveButton.setOnClickListener {
+            CalendarStorageUtils.saveLocally(this)
+            User.addChildPermission(params.activeChild?.childID ?: "000000",0)
+            if (params.activeChild?.parentConfirmed == true) {
+                params.activeChild?.getCalendarChanges()
+                //params.activeChild?.resolvePendingChanges()
+                params.activeChild?.deleteModifiedCalendar()
+                FirebaseUtils.saveActiveChild()
+            }
+            Log.d("CalendarActivity", "Original nights: ${params.activeChild?.officialCalendar?.get("2025")?.get(5)?.parent0_nights}")
+            Log.d("CalendarActivity", "Modified nights: ${params.activeChild?.modifiedCalendar?.get("2025")?.get(5)?.parent0_nights}")
+            FirebaseUtils.saveActiveChild()
+            startActivity(Intent(this, DashboardActivity::class.java))
+        }
 
         prevMonthBtn.setOnClickListener { CalendarUIUtils.shiftMonth(-1, params) }
         nextMonthBtn.setOnClickListener { CalendarUIUtils.shiftMonth(+1, params) }
@@ -87,6 +90,7 @@ class CalendarActivity :  AppCompatActivity() {
         CalendarUIUtils.addHeader(findViewById(R.id.headerRow), this)
 
         params.activeChild?.initializeCalendar(params.year, params.month, 0)
+        params.activeChild?.createModifiedCalendar()
 
         // initial draw for current month
         CalendarUIUtils.drawCalendarGrid(params)
