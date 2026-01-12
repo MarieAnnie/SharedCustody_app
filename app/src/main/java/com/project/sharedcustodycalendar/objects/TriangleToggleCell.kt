@@ -128,4 +128,8 @@ class TriangleToggleCell(
         val widthSize = MeasureSpec.getSize(widthMeasureSpec)
         setMeasuredDimension(widthSize, widthSize) // Make square
     }
+
+    fun refresh() {
+        invalidate()
+    }
 }

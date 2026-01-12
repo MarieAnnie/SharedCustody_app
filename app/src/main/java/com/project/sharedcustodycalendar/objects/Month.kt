@@ -132,4 +132,17 @@ data class Month(
     fun applyChanges() {
         changes = changes.filterNot { it.isToBeDeleted() }.toMutableList()
     }
+
+    fun applyChange(change: PendingChanges){
+        var night = change.night
+        var newParent = change.newParent
+        if (newParent == 0){
+            parent0_nights.add(night)
+            parent0_nights.sort()
+        } else{
+            parent0_nights.remove(night)
+
+        }
+        change.applied = true
+    }
 }

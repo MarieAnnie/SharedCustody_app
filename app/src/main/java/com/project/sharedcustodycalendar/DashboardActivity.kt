@@ -14,8 +14,10 @@ import com.project.sharedcustodycalendar.model.User
 import com.project.sharedcustodycalendar.objects.CalendarParameters
 import com.project.sharedcustodycalendar.objects.Child
 import com.project.sharedcustodycalendar.objects.FamilyDataHolder
+import com.project.sharedcustodycalendar.objects.ChangeStatus
 import com.project.sharedcustodycalendar.utils.CalendarStorageUtils
 import com.project.sharedcustodycalendar.utils.CalendarUIUtils
+import com.project.sharedcustodycalendar.utils.FirebaseUtils
 import com.project.sharedcustodycalendar.views.TriangleToggleCell
 import java.text.SimpleDateFormat
 import java.util.*
@@ -115,6 +117,10 @@ class DashboardActivity : AppCompatActivity() {
 
         activeChild = FamilyDataHolder.familyData.activeChild
         val activeChild = FamilyDataHolder.familyData.activeChild
+        if (activeChild != null) {
+            CalendarChangeManager.applyAllApprovedChanges(activeChild)
+            FirebaseUtils.saveActiveChild()
+        }
 
 
         if (activeChild != null && User.userData.childPermissions[activeChild.childID] in listOf(0, 1)) {
@@ -268,6 +274,21 @@ class DashboardActivity : AppCompatActivity() {
             }
         }
         return false
+    }
+
+    object CalendarChangeManager {
+
+        fun applyAllApprovedChanges(child: Child) {
+            child.officialCalendar.values.flatten().forEach { month ->
+                val list = month.changes.filter { it.status == ChangeStatus.APPROVED && !it.applied }
+                list.forEach { change ->
+                    month.applyChange(change)
+                    change.applied = true
+                }
+                // Optionally remove deleted changes
+                month.changes.removeAll { it.applied && it.isToBeDeleted()}
+            }
+        }
     }
 
 }

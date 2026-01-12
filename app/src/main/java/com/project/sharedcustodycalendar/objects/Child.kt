@@ -96,25 +96,69 @@ data class Child(
         return month?.starting_parent ?: 0
     }
 
-    fun initializeCalendar(year: Int, monthIdx: Int, starting_parent: Int) {
-        var calendar = GenerateCalendar()
+
+    fun initializeCalendar(year: Int, monthIdx: Int, startingParent: Int) : GenerateCalendar {
+        val calendar = GenerateCalendar()
         val monthsRemaining = (monthIdx..12).toList()
 
-        var monthIndexes = emptyList<Int>()
-
-        if (officialCalendar.containsKey(year.toString())) {
-            monthIndexes = getMonthIdsForYear(year.toString())
+        val monthIndexes = if (officialCalendar.containsKey(year.toString())) {
+            getMonthIdsForYear(year.toString())
+        } else {
+            emptyList()
         }
 
         val filteredMonths = monthsRemaining.filterNot { it in monthIndexes }
+
         if (filteredMonths.isNotEmpty()) {
-            calendar.generating_calendar(filteredMonths.first(), starting_parent, year)
+            calendar.generating_calendar(filteredMonths.first(), startingParent, year)
         }
-        //if (!isContinuous(filteredMonths)) {
-            // TODO message about overwriting
-        //}
+
         FirebaseUtils.saveActiveChild()
 
+        return calendar
+    }
+
+    fun regenerateCalendarFromDate(year: Int, month: Int, day: Int) {
+        val calendar = initializeCalendar(year, month, 0)
+
+        // Step 1: Remove future data from today onward
+        removeCalendarFrom(day, month, year)
+
+        // Step 2: Regenerate from today
+        calendar.regenerateFromDate(year, month, day)
+
+        // Persist changes
+        FirebaseUtils.saveActiveChild()
+
+    }
+
+    fun removeCalendarFrom(startDay: Int, startMonth: Int, startYear: Int) {
+        val yearStr = startYear.toString()
+        val months = officialCalendar[yearStr] ?: return
+
+        val iterator = months.iterator()
+        while (iterator.hasNext()) {
+            val month = iterator.next()
+            when {
+                month.monthId < startMonth -> {
+                    // Past months → keep unchanged
+                    continue
+                }
+                month.monthId == startMonth -> {
+                    // Current month → remove future days from startDay onward
+                    month.parent0_nights = month.parent0_nights.filter { it < startDay }.toMutableList()
+                }
+                month.monthId > startMonth -> {
+                    // Future months → remove completely
+                    iterator.remove()
+                }
+            }
+        }
+
+        // Optional: remove year if no months left
+        if (months.isEmpty()) {
+            officialCalendar.remove(yearStr)
+        }
     }
 
     fun getViewerToken(): String {

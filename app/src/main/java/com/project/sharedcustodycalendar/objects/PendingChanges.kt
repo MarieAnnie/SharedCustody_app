@@ -14,7 +14,8 @@ data class PendingChanges (
     var proposedByParent: Int? = -1,
     var newParent: Int = -1,
     val timeStamp: Long = System.currentTimeMillis(),
-    var status: ChangeStatus = ChangeStatus.PENDING
+    var status: ChangeStatus = ChangeStatus.PENDING,
+    var applied: Boolean = false
 ){
     fun toJson(): JSONObject {
         val json = JSONObject()
@@ -25,6 +26,7 @@ data class PendingChanges (
         json.put("proposedByParent", proposedByParent)
         json.put("status", status.name)
         json.put("timeStamp", timeStamp)
+        json.put("applied",applied)
         return json
     }
 
@@ -37,7 +39,8 @@ data class PendingChanges (
                 newParent = json.getInt("newParent"),
                 proposedByParent = json.getInt("proposedByParent"),
                 status = ChangeStatus.valueOf(json.getString("status")),
-                timeStamp = json.getLong("timeStamp")
+                timeStamp = json.getLong("timeStamp"),
+                applied = json.getBoolean("applied")
             )
         }
     }

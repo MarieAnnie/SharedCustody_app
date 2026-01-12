@@ -81,6 +81,20 @@
             android:text="Save"
             android:layout_marginTop="16dp" />
 
+        <Button
+            android:id="@+id/modifyPatternButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Modify Parental Schedule"
+            android:layout_marginTop="16dp" />
+
+        <Button
+            android:id="@+id/regenerateCalendarButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Regenerate Calendar"
+            android:layout_marginTop="16dp" />
+
         <TextView
             android:id="@+id/childID_textView"
             android:layout_width="wrap_content"

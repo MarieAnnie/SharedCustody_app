@@ -18,9 +18,6 @@ import com.project.sharedcustodycalendar.objects.FamilyDataHolder
 import com.project.sharedcustodycalendar.objects.PendingChanges
 import com.project.sharedcustodycalendar.utils.CalendarStorageUtils
 import com.project.sharedcustodycalendar.utils.FirebaseUtils
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.iterator
 
 
 class ReviewChangesActivity : AppCompatActivity() {
@@ -47,8 +44,8 @@ class ReviewChangesActivity : AppCompatActivity() {
         currentParent = User.userData.childPermissions[activeChild.childID] ?: -1
 
         parentColors = mapOf(
-            1 to Color.parseColor(activeChild.parents[0].color),
-            2 to Color.parseColor(activeChild.parents[1].color)
+            0 to (activeChild.parents.getOrNull(0)?.color?.let { Color.parseColor(it) } ?: Color.LTGRAY),
+            1 to (activeChild.parents.getOrNull(1)?.color?.let { Color.parseColor(it) } ?: Color.LTGRAY)
         )
 
         val changes = getAllPendingChanges(activeChild)
@@ -116,6 +113,7 @@ class ReviewChangesActivity : AppCompatActivity() {
             val card = createCard(backgroundColor)
             card.addView(createRequestDateText(change))
             card.addView(createMainTextDate(change))
+            card.addView(createEveningWithText(change))
 
             // Add buttons
             val buttonRow = when (type) {
@@ -189,6 +187,7 @@ class ReviewChangesActivity : AppCompatActivity() {
         text = "Date: ${change.night}/${change.monthId}/${change.year}"
         setTextColor(Color.BLACK)
         textSize = 16f
+        setPadding(0, 4, 0, 4)
     }
 
     private fun createButton(text: String, bgColor: String, onClick: () -> Unit) = Button(this).apply {
@@ -196,6 +195,18 @@ class ReviewChangesActivity : AppCompatActivity() {
         setBackgroundColor(Color.parseColor(bgColor))
         setTextColor(Color.WHITE)
         setOnClickListener { onClick() }
+    }
+
+    private fun getParentName(id: Int): String {
+        return activeChild.parents.getOrNull(id)?.name ?: "Parent"
+    }
+
+    private fun createEveningWithText(change: PendingChanges) = TextView(this).apply {
+        val parentName = getParentName(change.newParent)
+        text = "Evening with $parentName"
+        setTextColor(Color.DKGRAY)
+        textSize = 14f
+        setPadding(0, 6, 0, 6)
     }
 }
 

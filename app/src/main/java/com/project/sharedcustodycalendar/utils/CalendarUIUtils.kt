@@ -69,6 +69,13 @@ object CalendarUIUtils {
     }
 
     fun drawCalendarGrid(params: CalendarParameters) {
+        params.calendarGrid.rowCount = 6
+        params.calendarGrid.columnCount = 7
+
+        var hasMonthData = false
+        var parent0EveningSchedule = listOf<Int>()
+        val activeChild = params.activeChild ?: return  // early exit
+
         val calendar = Calendar.getInstance()
         calendar.set(Calendar.YEAR, params.year)
         calendar.set(Calendar.MONTH, params.month - 1)
@@ -77,21 +84,17 @@ object CalendarUIUtils {
         val daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
         val startDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) // Sunday = 1, Saturday = 7
 
-        params.calendarGrid.rowCount = 6
-        params.calendarGrid.columnCount = 7
-
-        var hasMonthData = false
-        var parent0EveningSchedule = listOf<Int>()
-        val activeChild = params.activeChild ?: return  // early exit
-
         val calendarMap = when {
             params.isCalendarActivity -> activeChild.modifiedCalendar
             else -> activeChild.officialCalendar
         }
 
-        val month = calendarMap[params.year.toString()]?.find { it.monthId == params.month }
+        val month = calendarMap[params.year.toString()]
+            ?.firstOrNull { it.monthId == params.month }
         parent0EveningSchedule = month?.parent0_nights ?: emptyList()
         hasMonthData = month != null
+
+        val emptySchedule = MutableList(daysInMonth) { -1 }
 
         val eveningSchedule = if (hasMonthData) {
             MutableList(daysInMonth) { 1 }.apply {
@@ -99,20 +102,19 @@ object CalendarUIUtils {
                     if (day in 1..daysInMonth) this[day - 1] = 0
                 }
             }
-        } else {
-            MutableList(daysInMonth) { -1 }
-        }
+        } else emptySchedule.toMutableList()
 
         val morningSchedule = if (hasMonthData) {
             MutableList(daysInMonth) { 0 }.apply {
-                this[0] = activeChild.getStartingParent(calendarMap, params.year.toString(), params.month)
+                this[0] = activeChild.getStartingParent(
+                    calendarMap, params.year.toString(), params.month
+                )
                 for (i in 0 until daysInMonth - 1) {
                     this[i + 1] = eveningSchedule[i]
                 }
             }
-        } else {
-            MutableList(daysInMonth) { -1 }
-        }
+        } else emptySchedule.toMutableList()
+
 
         // Clear previous cells
         params.calendarGrid.removeAllViews()

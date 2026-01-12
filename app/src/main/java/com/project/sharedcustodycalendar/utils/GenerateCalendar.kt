@@ -5,6 +5,7 @@ import com.project.sharedcustodycalendar.objects.Month
 import java.util.Calendar
 
 class GenerateCalendar {
+
     data class MonthMatrixResult(
         val matrix: List<List<Int>>,
         val firstDay: Int,
@@ -20,28 +21,52 @@ class GenerateCalendar {
         }
     }
 
-    fun add_new_month(monthIdx: Int, starting_parent: Int, year: Int) : Int {
+    fun regenerateFromDate(year: Int, month: Int, day: Int) {
+        val activeChild = FamilyDataHolder.familyData.activeChild ?: return
+
+
+        // Determine starting parent
+        val startingParent = activeChild.getStartingParent(
+            activeChild.officialCalendar, year.toString(), month
+        )
+
+        // Reset week pattern
+        resetWeekPattern()
+
+        // Generate current month from today
+        var newParent = add_new_month(month, startingParent, year, startDay = day)
+
+        // Continue generating remaining months
+        for (m in (month + 1)..12) {
+            newParent = add_new_month(m, newParent, year)
+        }
+
+        // Save
+        FirebaseUtils.saveActiveChild()
+    }
+
+
+    fun add_new_month(monthIdx: Int, starting_parent: Int, year: Int, startDay: Int = 1): Int {
         val activeChild = FamilyDataHolder.familyData?.activeChild ?: return -1
         val schedulePattern = activeChild.schedulePattern
 
-        var monthMatrix = getMonthMatrix(year, monthIdx)
-        var firstday = monthMatrix.firstDay
+        val monthMatrix = getMonthMatrix(year, monthIdx)
+        var day = startDay - 1  // 0-based index for the month
 
-        var parent0_nights = mutableListOf<Int>()
-        var day = firstday
+        val firstDay = monthMatrix.firstDay
+        set_pattern(firstDay, starting_parent, schedulePattern)
 
-        set_pattern(firstday, starting_parent, schedulePattern)
+        val parent0_nights = mutableListOf<Int>()
         var night_parent = -1
 
-        for (i in 0 until monthMatrix.numberOfDays) {
-            night_parent = getNightParentIdx(day, schedulePattern)
-            if (night_parent == 0){
-                parent0_nights.add(i+1)
-            }
-            day = (day + 1) % 7
+        for (i in day until monthMatrix.numberOfDays) {
+            night_parent = getNightParentIdx((firstDay + i) % 7, schedulePattern)
+            if (night_parent == 0) parent0_nights.add(i + 1)
         }
-        var new_month = Month(monthIdx, starting_parent, parent0_nights)
+
+        val new_month = Month(monthIdx, starting_parent, parent0_nights)
         activeChild.setOrUpdateMonth(year.toString(), new_month)
+
         return night_parent
     }
 
@@ -115,4 +140,8 @@ class GenerateCalendar {
 
         return nightParent
     }
+
+    fun resetWeekPattern() {
+        current_week_pattern = null
     }
+}

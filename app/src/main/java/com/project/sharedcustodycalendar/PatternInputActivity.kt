@@ -25,19 +25,34 @@ class PatternInputActivity : AppCompatActivity() {
     private val morningSchedule = MutableList(28) { 0 }  // color at start of day
     private val eveningSchedule = MutableList(28) { 0 }  // color at end of day
 
+    private var isEditMode = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_pattern)
 
-        val titleTextView = findViewById<TextView>(R.id.titleTextView)
-        val activeChildName = FamilyDataHolder.familyData.activeChild?.childName ?: "Unknown"
-        titleTextView.text = "New Calendar for $activeChildName"
+        // 1 Determine mode FIRST
+        isEditMode = intent.getStringExtra("MODE") == "EDIT"
 
+        // 2 Bind views
+        val titleTextView = findViewById<TextView>(R.id.titleTextView)
         weekCountInput = findViewById(R.id.weekCountInput)
         generateButton = findViewById(R.id.generateButton)
         calendarGrid = findViewById(R.id.calendarGrid)
         legendLayout = findViewById(R.id.legendLayout)
 
+        // 3 Apply mode-dependent UI rules
+        weekCountInput.isEnabled = !isEditMode
+
+        val activeChildName =
+            FamilyDataHolder.familyData.activeChild?.childName ?: "Unknown"
+
+        titleTextView.text = if (isEditMode)
+            "Edit Pattern for $activeChildName"
+        else
+            "New Calendar for $activeChildName"
+
+        // 4 Create Save button
         // Create and add the Save button programmatically below calendarGrid
         saveButton = Button(this).apply {
             text = "Save"
@@ -53,6 +68,7 @@ class PatternInputActivity : AppCompatActivity() {
         }
         (calendarGrid.parent as LinearLayout).addView(saveButton)
 
+        // 5 Generate button
         generateButton.setOnClickListener {
             numberOfWeeks = weekCountInput.text.toString().toIntOrNull() ?: 0
             if (numberOfWeeks in 1..4) {
@@ -63,7 +79,35 @@ class PatternInputActivity : AppCompatActivity() {
                 Toast.makeText(this, "Please enter a number between 1 and 4", Toast.LENGTH_SHORT).show()
             }
         }
+
+        // 6 Load pattern ONLY after views exist
+        if (isEditMode) {
+            loadExistingPattern()
+        }
     }
+
+    private fun loadExistingPattern() {
+        val existingPattern =
+            FamilyDataHolder.familyData.activeChild?.schedulePattern ?: return
+
+        numberOfWeeks = existingPattern.size / 7
+        weekCountInput.setText(numberOfWeeks.toString())
+
+        // Copy into evening schedule (your saved source of truth)
+        for (i in existingPattern.indices) {
+            eveningSchedule[i] = existingPattern[i]
+        }
+
+        CalendarUIUtils.drawLegend(this, legendLayout)
+        drawCalendarGrid()
+
+        // Tell cells to refresh from schedule
+        cellViews.forEach { it.refresh() }
+
+        saveButton.isEnabled = true
+        generateButton.isEnabled = false
+    }
+
 
     private fun drawCalendarGrid() {
         calendarGrid.removeAllViews()

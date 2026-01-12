@@ -23,6 +23,8 @@ class CalendarActivity :  AppCompatActivity() {
     private lateinit var prevMonthBtn: Button
     private lateinit var nextMonthBtn: Button
     private lateinit var saveButton: Button
+    private lateinit var modifyButton : Button
+    private lateinit var regenerateButton : Button
 
     private lateinit var params: CalendarParameters
 
@@ -39,6 +41,8 @@ class CalendarActivity :  AppCompatActivity() {
         prevMonthBtn = findViewById(R.id.prevMonthBtn)
         nextMonthBtn = findViewById(R.id.nextMonthBtn)
         saveButton = findViewById(R.id.saveButton)
+        modifyButton = findViewById(R.id.modifyPatternButton)
+        regenerateButton = findViewById(R.id.regenerateCalendarButton)
 
         // Show today's date
         val today = Calendar.getInstance()
@@ -64,10 +68,26 @@ class CalendarActivity :  AppCompatActivity() {
                 params.activeChild?.deleteModifiedCalendar()
                 FirebaseUtils.saveActiveChild()
             }
-            Log.d("CalendarActivity", "Original nights: ${params.activeChild?.officialCalendar?.get("2025")?.get(5)?.parent0_nights}")
-            Log.d("CalendarActivity", "Modified nights: ${params.activeChild?.modifiedCalendar?.get("2025")?.get(5)?.parent0_nights}")
             FirebaseUtils.saveActiveChild()
             startActivity(Intent(this, DashboardActivity::class.java))
+        }
+
+        modifyButton.setOnClickListener {
+            val intent = Intent(this, PatternInputActivity::class.java)
+            intent.putExtra("MODE", "EDIT")
+            startActivity(intent)
+        }
+
+        regenerateButton.setOnClickListener {
+            val today = Calendar.getInstance()  // gets current date/time
+            val year = today.get(Calendar.YEAR)
+            val month = today.get(Calendar.MONTH) + 1  // Calendar.MONTH is 0-based
+            val day = today.get(Calendar.DAY_OF_MONTH)
+
+            params.activeChild?.regenerateCalendarFromDate(year, month, day)
+            FirebaseUtils.saveActiveChild()
+            startActivity(Intent(this, DashboardActivity::class.java))
+
         }
 
         prevMonthBtn.setOnClickListener { CalendarUIUtils.shiftMonth(-1, params) }
