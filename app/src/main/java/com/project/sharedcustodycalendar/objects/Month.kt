@@ -1,57 +1,58 @@
 package com.project.sharedcustodycalendar.objects
 
-import org.json.JSONObject
+import java.time.LocalDate
 
-import com.project.sharedcustodycalendar.utils.CalendarStorageUtils.toIntList
-import org.json.JSONArray
-
-data class Month(
-    var monthId: Int = 0,
-    var starting_parent: Int = 0,
-    var parent0_nights: MutableList<Int>,
-    var changes : MutableList<PendingChanges> = mutableListOf<PendingChanges>()
+class Month(
+    val monthId: Int,
+    val year: Int
 ) {
-    // for Firebase
-    constructor() : this(0, 0, mutableListOf(), mutableListOf())
+    val nbDaysInMonth : Int = LocalDate.of(year,monthId,1).lengthOfMonth()
+    val days: MutableMap<Int, Day> = mutableMapOf()
 
-    fun toJson(): JSONObject{
-        val json = JSONObject()
-        json.put("monthId", monthId)
-        json.put("starting_parent", starting_parent)
-        json.put("parent0_nights", JSONArray(parent0_nights))
-
-        val changesArray = JSONArray()
-        for (change in changes) {
-            changesArray.put(change.toJson())  // Assuming PendingChanges has toJson()
-        }
-        json.put("changes", changesArray)
-
-        return json
-    }
+    val startParentID: Int
+        get() = days[1]?.startingParentID?: UNKNOWN_PARENT
 
     companion object {
-        fun fromJson(json: JSONObject): Month {
-            val month = Month(
-                monthId = json.getInt("monthId"),
-                starting_parent = json.getInt("starting_parent"),
-                parent0_nights = json.getJSONArray("parent0_nights").toIntList().toMutableList()
-            )
-
-            val changesArray = json.optJSONArray("changes")
-            if (changesArray != null) {
-                for (i in 0 until changesArray.length()) {
-                    month.changes.add(PendingChanges.fromJson(changesArray.getJSONObject(i)))
-                }
-            }
-
-            return month
-        }
+        const val UNKNOWN_PARENT = -1
     }
 
+    fun addDayFromFirebase(day: Day) {
+        val dayNumber = day.date.dayOfMonth
+
+        if (dayNumber !in 1..nbDaysInMonth) return
+
+        // Optional: detect overwrite
+        //if (days[index].startingParentID != UNKNOWN_PARENT) {
+            // already filled → possible duplicate from Firebase
+        //}
+
+        days[dayNumber] = day
+    }
+
+    fun isComplete(): Boolean {
+        if (days.size != nbDaysInMonth) return false
+
+        return (1..nbDaysInMonth).all { it in days }
+    }
+
+
     fun addChange(change: PendingChanges) {
+        val dayOfTheMonth = change.date.dayOfMonth
+        val day = days[dayOfTheMonth]
+
+        if (day){
+            if(checkIfChangeExists(change, day)){
+                changes.add()
+            }
+        }
+
         if (!changes.any { it.night == change.night && it.proposedByParent == change.proposedByParent && it.status == ChangeStatus.PENDING }) {
             changes.add(change)
         }
+    }
+
+    fun checkIfChangeExists(change: PendingChanges, day : Day) : Boolean {
+        return (day.pendingChanges.any { it.time == change.time})
     }
 
     fun updateParent0Nights(day: Int, newParent: Int = -1): Int {
@@ -144,5 +145,9 @@ data class Month(
 
         }
         change.applied = true
+    }
+
+    fun removeChangesFromDayInclusive(day: Int) {
+        changes = changes.filter { it.night < day }.toMutableList()
     }
 }

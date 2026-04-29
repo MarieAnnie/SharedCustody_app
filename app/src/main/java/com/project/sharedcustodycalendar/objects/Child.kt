@@ -97,24 +97,17 @@ data class Child(
     }
 
 
-    fun initializeCalendar(year: Int, monthIdx: Int, startingParent: Int) : GenerateCalendar {
+    fun initializeCalendar(startYear: Int, startingParent: Int, yearsToGenerate: Int = 1): GenerateCalendar {
         val calendar = GenerateCalendar()
-        val monthsRemaining = (monthIdx..12).toList()
-
-        val monthIndexes = if (officialCalendar.containsKey(year.toString())) {
-            getMonthIdsForYear(year.toString())
-        } else {
-            emptyList()
+        for (year in startYear until startYear + yearsToGenerate) {
+            val monthsRemaining = if (year == startYear) Calendar.getInstance().get(Calendar.MONTH) + 1..12 else 1..12
+            val monthIndexes = getMonthIdsForYear(year.toString())
+            val filteredMonths = monthsRemaining.filterNot { it in monthIndexes }
+            if (filteredMonths.isNotEmpty()) {
+                calendar.generating_calendar(filteredMonths.first(), startingParent, year)
+            }
         }
-
-        val filteredMonths = monthsRemaining.filterNot { it in monthIndexes }
-
-        if (filteredMonths.isNotEmpty()) {
-            calendar.generating_calendar(filteredMonths.first(), startingParent, year)
-        }
-
         FirebaseUtils.saveActiveChild()
-
         return calendar
     }
 
@@ -122,7 +115,7 @@ data class Child(
         val calendar = initializeCalendar(year, month, 0)
 
         // Step 1: Remove future data from today onward
-        removeCalendarFrom(day, month, year)
+        removeCalendarFromDateInclusive(year, month, day)
 
         // Step 2: Regenerate from today
         calendar.regenerateFromDate(year, month, day)
@@ -132,34 +125,53 @@ data class Child(
 
     }
 
-    fun removeCalendarFrom(startDay: Int, startMonth: Int, startYear: Int) {
-        val yearStr = startYear.toString()
-        val months = officialCalendar[yearStr] ?: return
+    fun removeCalendarFromDateInclusive(year: Int, month: Int, day: Int) {
+        val months = officialCalendar[year.toString()] ?: return
 
         val iterator = months.iterator()
         while (iterator.hasNext()) {
-            val month = iterator.next()
-            when {
-                month.monthId < startMonth -> {
-                    // Past months → keep unchanged
-                    continue
-                }
-                month.monthId == startMonth -> {
-                    // Current month → remove future days from startDay onward
-                    month.parent0_nights = month.parent0_nights.filter { it < startDay }.toMutableList()
-                }
-                month.monthId > startMonth -> {
-                    // Future months → remove completely
-                    iterator.remove()
-                }
+            val m = iterator.next()
+
+            if (m.monthId < month) continue
+
+            if (m.monthId == month) {
+                // KEEP days before 'day'
+                m.parent0_nights = m.parent0_nights.filter { it < day }.toMutableList()
+                // ✅ Keep pending changes before day
+                m.removeChangesFromDayInclusive(day)
+            } else {
+                iterator.remove()
             }
         }
-
-        // Optional: remove year if no months left
-        if (months.isEmpty()) {
-            officialCalendar.remove(yearStr)
-        }
     }
+
+    fun getNightParentBeforeDate(year: Int, month: Int, day: Int): Int {
+        val m = officialCalendar[year.toString()]
+            ?.find { it.monthId == month }
+            ?: return 0
+
+        return if ((day - 1) in m.parent0_nights) 0 else 1
+    }
+
+    fun getOrCreateMonth(year: String, monthId: Int): Month {
+        val months = officialCalendar.getOrPut(year) { mutableListOf() }
+
+        // Try to find existing month
+        val existing = months.find { it.monthId == monthId }
+        if (existing != null) return existing
+
+        // Create new month if missing
+        val newMonth = Month(
+            monthId = monthId,
+            starting_parent = -1,
+            parent0_nights = mutableListOf(),
+            changes = mutableListOf()
+        )
+
+        months.add(newMonth)
+        return newMonth
+    }
+
 
     fun getViewerToken(): String {
         return IDEncoder.encodeViewerID(childID)

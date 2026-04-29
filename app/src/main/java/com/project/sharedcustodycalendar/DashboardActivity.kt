@@ -43,44 +43,54 @@ class DashboardActivity : AppCompatActivity() {
     private var activeChild: Child? = null
 
     private fun onRefresh() {
-
-        CalendarStorageUtils.loadLocally(this)  // Or your own function
-
-        // Simulate refresh delay
-        Handler(Looper.getMainLooper()).postDelayed({
-            swipeRefreshLayout.isRefreshing = false  // Hide refresh spinner
-        }, 1500)
-
-        val currentChild = FamilyDataHolder.familyData.activeChild
-        val currentParent = User.userData.childPermissions[currentChild?.childID]
-
-        // Default: hide the button
-        modifyButton.visibility = View.GONE
-        modifyButton.setOnClickListener(null)
-
-        // Only visible to parents 0 or 1
-        if (currentChild != null && User.userData.childPermissions[currentChild.childID] in listOf(0, 1)) {
-            modifyButton.visibility = View.VISIBLE
-
-            // Check if there are pending approvals (changes proposed by the other parent)
-            val hasPendingApprovals = currentChild.officialCalendar.values
-                ?.flatten()  // get all months
-                ?.flatMap { it.changes }
-                ?.any { it.proposedByParent != currentParent && it.isPending() } == true
-
-            // Redirect to the right page based on pending approvals
-            modifyButton.setOnClickListener {
-                val intent = if (hasPendingApprovals) {
-                    Intent(this, ReviewChangesActivity::class.java)
-                } else {
-                    Intent(this, CalendarActivity::class.java)
-                }
-                startActivity(intent)
-            }
+        val activeChildId = FamilyDataHolder.familyData.activeChild?.childID
+        if (activeChildId == null) {
+            swipeRefreshLayout.isRefreshing = false
+            Toast.makeText(this, "No active child to refresh", Toast.LENGTH_SHORT).show()
+            return
         }
 
-        swipeRefreshLayout.isRefreshing = false
+        swipeRefreshLayout.isRefreshing = true  // show spinner
+
+        // Load the latest child data from Firebase
+        FirebaseUtils.loadChild(activeChildId) { childFromFirebase ->
+            if (childFromFirebase != null) {
+                // Update the active child in FamilyDataHolder
+                FamilyDataHolder.familyData.setActiveChild(childFromFirebase.childID)
+                FamilyDataHolder.familyData.activeChild?.apply {
+                    // Replace local data with fresh data
+                    officialCalendar.clear()
+                    officialCalendar.putAll(childFromFirebase.officialCalendar)
+                    modifiedCalendar.clear()
+                    modifiedCalendar.putAll(childFromFirebase.modifiedCalendar)
+                }
+
+                // Apply approved changes
+                val activeChild = FamilyDataHolder.familyData.activeChild
+                if (activeChild != null) {
+                    DashboardActivity.CalendarChangeManager.applyAllApprovedChanges(activeChild)
+
+                    // Optional: save to local cache
+                    CalendarStorageUtils.saveLocally(this)
+
+                    // Update calendar UI
+                    val today = Calendar.getInstance()
+                    params.year = today.get(Calendar.YEAR)
+                    params.month = today.get(Calendar.MONTH) + 1
+                    CalendarUIUtils.updateHeaderAndGrid(params)
+
+                    // Update modify button visibility/click
+                    setupModifyButton()
+                }
+
+            } else {
+                Toast.makeText(this, "Failed to fetch latest child data", Toast.LENGTH_SHORT).show()
+            }
+
+            swipeRefreshLayout.isRefreshing = false  // stop spinner
+        }
     }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -122,26 +132,7 @@ class DashboardActivity : AppCompatActivity() {
             FirebaseUtils.saveActiveChild()
         }
 
-
-        if (activeChild != null && User.userData.childPermissions[activeChild.childID] in listOf(0, 1)) {
-            modifyButton.visibility = View.VISIBLE
-            modifyButton.setOnClickListener {
-                if (hasPendingChangesToApprove()) {
-                    Toast.makeText(
-                        this,
-                        "Please review all the pending changes from the other parent before doing new modifications.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    // Show pending changes to approve first
-                    startActivity(Intent(this, ReviewChangesActivity::class.java))
-                } else {
-                    // No pending changes → safe to load the editable calendar
-                    startActivity(Intent(this, CalendarActivity::class.java))
-                }
-            }
-        } else {
-            modifyButton.isEnabled = false
-        }
+        setupModifyButton()
 
         // Set today's date
         val today = Calendar.getInstance()
@@ -275,6 +266,30 @@ class DashboardActivity : AppCompatActivity() {
         }
         return false
     }
+
+    private fun setupModifyButton() {
+        val child = FamilyDataHolder.familyData.activeChild
+        val currentParent = User.userData.childPermissions[child?.childID]
+
+        if (child != null && currentParent in listOf(0, 1)) {
+            modifyButton.visibility = View.VISIBLE
+            modifyButton.isEnabled = true
+            modifyButton.setOnClickListener {
+                if (hasPendingChangesToApprove()) {
+                    // Redirect to review changes
+                    startActivity(Intent(this, ReviewChangesActivity::class.java))
+                } else {
+                    // Redirect to editable calendar
+                    startActivity(Intent(this, CalendarActivity::class.java))
+                }
+            }
+        } else {
+            modifyButton.visibility = View.GONE
+            modifyButton.isEnabled = false
+            modifyButton.setOnClickListener(null)
+        }
+    }
+
 
     object CalendarChangeManager {
 

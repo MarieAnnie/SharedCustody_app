@@ -8,8 +8,9 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.project.sharedcustodycalendar.model.User
+import android.app.DatePickerDialog
 import com.project.sharedcustodycalendar.objects.CalendarParameters
+import com.project.sharedcustodycalendar.objects.Child
 import com.project.sharedcustodycalendar.objects.FamilyDataHolder
 import com.project.sharedcustodycalendar.utils.CalendarUIUtils
 import com.project.sharedcustodycalendar.views.TriangleToggleCell
@@ -61,12 +62,17 @@ class CalendarActivity :  AppCompatActivity() {
 
         saveButton.setOnClickListener {
             CalendarStorageUtils.saveLocally(this)
-            User.addChildPermission(params.activeChild?.childID ?: "000000",0)
+            //User.addChildPermission(params.activeChild?.childID ?: "000000",0)
+            val child = params.activeChild ?: return@setOnClickListener
+            Log.i("CalendarActivity", "is loop on?: : ${params.activeChild?.parentConfirmed}" )
             if (params.activeChild?.parentConfirmed == true) {
-                params.activeChild?.getCalendarChanges()
+                Log.INFO
+                child.getCalendarChanges()
                 //params.activeChild?.resolvePendingChanges()
-                params.activeChild?.deleteModifiedCalendar()
-                FirebaseUtils.saveActiveChild()
+                child.deleteModifiedCalendar()
+            }
+            else {
+                applyModifiedCalendarToOfficial(child) // ← copy modified → official
             }
             FirebaseUtils.saveActiveChild()
             startActivity(Intent(this, DashboardActivity::class.java))
@@ -79,16 +85,42 @@ class CalendarActivity :  AppCompatActivity() {
         }
 
         regenerateButton.setOnClickListener {
-            val today = Calendar.getInstance()  // gets current date/time
+
+            val today = Calendar.getInstance()
+
             val year = today.get(Calendar.YEAR)
-            val month = today.get(Calendar.MONTH) + 1  // Calendar.MONTH is 0-based
+            val month = today.get(Calendar.MONTH)   // 0-based for DatePicker
             val day = today.get(Calendar.DAY_OF_MONTH)
 
-            params.activeChild?.regenerateCalendarFromDate(year, month, day)
-            FirebaseUtils.saveActiveChild()
-            startActivity(Intent(this, DashboardActivity::class.java))
+            val datePicker = DatePickerDialog(
+                this@CalendarActivity,
+                { _, selectedYear, selectedMonth, selectedDay ->
 
+                    // Convert month back to 1-based for your logic
+                    val regenMonth = selectedMonth + 1
+
+                    params.activeChild?.regenerateCalendarFromDate(
+                        selectedYear,
+                        regenMonth,
+                        selectedDay
+                    )
+
+                    FirebaseUtils.saveActiveChild()
+                    startActivity(Intent(this, DashboardActivity::class.java))
+                    finish()
+                },
+                year,
+                month,
+                day
+            )
+
+            // Optional but VERY recommended:
+            // prevent regenerating in the past
+            datePicker.datePicker.minDate = today.timeInMillis
+
+            datePicker.show()
         }
+
 
         prevMonthBtn.setOnClickListener { CalendarUIUtils.shiftMonth(-1, params) }
         nextMonthBtn.setOnClickListener { CalendarUIUtils.shiftMonth(+1, params) }
@@ -115,6 +147,17 @@ class CalendarActivity :  AppCompatActivity() {
         // initial draw for current month
         CalendarUIUtils.drawCalendarGrid(params)
     }
+
+    fun applyModifiedCalendarToOfficial(child: Child) {
+        val modified = child.modifiedCalendar
+        modified.forEach { (year, months) ->
+            months.forEach { month ->
+                child.setOrUpdateMonth(year, month)
+            }
+        }
+        child.deleteModifiedCalendar() // optional after copying
+    }
+
 
  }
 
