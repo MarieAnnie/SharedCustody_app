@@ -1,4 +1,4 @@
-package com.project.sharedcustodycalendar.objects
+package com.project.sharedcustodycalendar.model
 
 import java.time.LocalTime
 

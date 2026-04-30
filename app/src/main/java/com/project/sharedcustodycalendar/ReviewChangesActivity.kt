@@ -15,7 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.project.sharedcustodycalendar.model.User
 import com.project.sharedcustodycalendar.objects.Child
 import com.project.sharedcustodycalendar.objects.FamilyDataHolder
-import com.project.sharedcustodycalendar.objects.PendingChanges
+import com.project.sharedcustodycalendar.objects.PendingChange
 import com.project.sharedcustodycalendar.utils.CalendarStorageUtils
 import com.project.sharedcustodycalendar.utils.FirebaseUtils
 
@@ -81,13 +81,13 @@ class ReviewChangesActivity : AppCompatActivity() {
         // Approve all button
         approveAllButton.setOnClickListener {
             toApprove.forEach { if (it.isPending()) it.approveChange() }
-            myDecisions.forEach { if (it.isApproved() || it.isRejected()) it.toBeDeleted() }
+            myDecisions.forEach { if (it.isApproved() || it.isRejected()) it.toAcknowledge() }
             FirebaseUtils.saveActiveChild()
             Toast.makeText(this, "All changes processed", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun getAllPendingChanges(child: Child): List<PendingChanges> {
+    private fun getAllPendingChanges(child: Child): List<PendingChange> {
         return child.officialCalendar.values.flatten()
             .flatMap { it.changes }
             .filter { it.forCurrentParent() }
@@ -95,7 +95,7 @@ class ReviewChangesActivity : AppCompatActivity() {
 
     private enum class SectionType { MY_DECISIONS, TO_APPROVE, MY_PENDING }
 
-    private fun addSection(title: String, items: List<PendingChanges>, type: SectionType) {
+    private fun addSection(title: String, items: List<PendingChange>, type: SectionType) {
         if (items.isEmpty()) return
 
         changesContainer.addView(createTitle(title))
@@ -119,7 +119,7 @@ class ReviewChangesActivity : AppCompatActivity() {
             val buttonRow = when (type) {
                 SectionType.MY_DECISIONS -> createButtonRow(listOf(
                     createButton("Comfirm", "#9C27B0") {
-                        change.toBeDeleted()
+                        change.toAcknowledge()
                         Toast.makeText(this, "Acknowledged", Toast.LENGTH_SHORT).show()
                         changesContainer.removeView(card)
                     }
@@ -138,7 +138,7 @@ class ReviewChangesActivity : AppCompatActivity() {
                 ))
                 SectionType.MY_PENDING -> createButtonRow(listOf(
                     createButton("✖ Cancel", "#F44336") {
-                        change.toBeDeleted()
+                        change.toAcknowledge()
                         Toast.makeText(this, "Deleted request", Toast.LENGTH_SHORT).show()
                         changesContainer.removeView(card)
                     }
@@ -175,7 +175,7 @@ class ReviewChangesActivity : AppCompatActivity() {
         ).apply { setMargins(0, 0, 0, 32) }
     }
 
-    private fun createRequestDateText(change: PendingChanges) = TextView(this).apply {
+    private fun createRequestDateText(change: PendingChange) = TextView(this).apply {
         val formatter = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
         text = "Requested on: ${formatter.format(Date(change.timeStamp))}"
         setTextColor(Color.GRAY)
@@ -183,7 +183,7 @@ class ReviewChangesActivity : AppCompatActivity() {
         gravity = Gravity.END
     }
 
-    private fun createMainTextDate(change: PendingChanges) = TextView(this).apply {
+    private fun createMainTextDate(change: PendingChange) = TextView(this).apply {
         text = "Date: ${change.night}/${change.monthId}/${change.year}"
         setTextColor(Color.BLACK)
         textSize = 16f
@@ -201,7 +201,7 @@ class ReviewChangesActivity : AppCompatActivity() {
         return activeChild.parents.getOrNull(id)?.name ?: "Parent"
     }
 
-    private fun createEveningWithText(change: PendingChanges) = TextView(this).apply {
+    private fun createEveningWithText(change: PendingChange) = TextView(this).apply {
         val parentName = getParentName(change.newParent)
         text = "Evening with $parentName"
         setTextColor(Color.DKGRAY)

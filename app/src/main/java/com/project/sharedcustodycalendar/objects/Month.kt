@@ -36,7 +36,7 @@ class Month(
     }
 
 
-    fun addChange(change: PendingChanges) {
+    fun addChange(change: PendingChange) {
         val dayOfTheMonth = change.date.dayOfMonth
         val day = days[dayOfTheMonth]
 
@@ -51,7 +51,7 @@ class Month(
         }
     }
 
-    fun checkIfChangeExists(change: PendingChanges, day : Day) : Boolean {
+    fun checkIfChangeExists(change: PendingChange, day : Day) : Boolean {
         return (day.pendingChanges.any { it.time == change.time})
     }
 
@@ -94,7 +94,7 @@ class Month(
     }
 
     fun resolvePendingChanges()  {
-        val result = mutableListOf<PendingChanges>()
+        val result = mutableListOf<PendingChange>()
 
         // Group all changes by night (inside a single month)
         val grouped = changes.groupBy { it.night }
@@ -134,7 +134,7 @@ class Month(
         changes = changes.filterNot { it.isToBeDeleted() }.toMutableList()
     }
 
-    fun applyChange(change: PendingChanges){
+    fun applyChange(change: PendingChange){
         var night = change.night
         var newParent = change.newParent
         if (newParent == 0){

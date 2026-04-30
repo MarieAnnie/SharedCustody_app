@@ -7,19 +7,21 @@ import java.time.LocalTime
 import java.util.UUID
 
 enum class ChangeStatus {
-    PENDING, APPROVED, REJECTED, TOBEDELETED
+    PENDING, APPROVED, REJECTED, ACKNOWLEDGE
 }
 
-data class PendingChanges (
+data class PendingChange (
     val date: LocalDate,
-    val time: LocalTime?,
+    val time: LocalTime,
     val fromParentID: Int,
     val toParentID: Int,
     val proposedByParentID: Int,
+    val groupID: String,
     var status: ChangeStatus = ChangeStatus.PENDING,
-    val applied: Boolean = false,
+    var applied: Boolean = false,
+    val isFullDayOverride: Boolean = false,
     val timeStamp: Long = System.currentTimeMillis(),
-    val id: String = UUID.randomUUID().toString(),
+    val id: String = UUID.randomUUID().toString()
 ){
     fun toJson(): JSONObject {
         val json = JSONObject()
@@ -28,26 +30,30 @@ data class PendingChanges (
         json.put("toParent", toParentID)
         json.put("fromParent", fromParentID)
         json.put("proposedByParent", proposedByParentID)
+        json.put("groupID", groupID)
         json.put("status", status.name)
         json.put("timeStamp", timeStamp)
         json.put("applied",applied)
+        json.put("isFullDayOverride", isFullDayOverride)
         json.put("id",id)
 
         return json
     }
 
     companion object {
-        fun fromJson(json: JSONObject): PendingChanges {
+        fun fromJson(json: JSONObject): PendingChange {
 
-            return PendingChanges(
+            return PendingChange(
                 date = LocalDate.parse(json.getString("date")),
                 time = LocalTime.parse(json.getString("time")),
                 toParentID = json.getInt("toParent"),
                 fromParentID = json.getInt("fromParent"),
                 proposedByParentID = json.getInt("proposedByParent"),
+                groupID = json.getString("groupID"),
                 status = ChangeStatus.valueOf(json.getString("status")),
                 timeStamp = json.getLong("timeStamp"),
                 applied = json.getBoolean("applied"),
+                isFullDayOverride = json.getBoolean("isFullDayOverride"),
                 id = json.getString("id")
             )
         }
@@ -77,12 +83,12 @@ data class PendingChanges (
         return status == ChangeStatus.REJECTED
     }
 
-    fun toBeDeleted(){
-        status = ChangeStatus.TOBEDELETED
+    fun toAcknowledge(){
+        status = ChangeStatus.ACKNOWLEDGE
     }
 
-    fun isToBeDeleted(): Boolean{
-        return status == ChangeStatus.TOBEDELETED
+    fun isAcknowledged(): Boolean{
+        return status == ChangeStatus.ACKNOWLEDGE
     }
 
     fun isProposedParent(parentID: Int) : Boolean {

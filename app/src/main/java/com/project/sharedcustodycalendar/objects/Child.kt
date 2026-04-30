@@ -219,7 +219,7 @@ data class Child(
                         }
 
                         if (!alreadyExists) {
-                            val change = PendingChanges(
+                            val change = PendingChange(
                                 year = year.toInt(),
                                 monthId = officialMonth.monthId,
                                 night = day,
