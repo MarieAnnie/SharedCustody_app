@@ -1,6 +1,15 @@
 package com.project.sharedcustodycalendar
 
 
+/*
+    TODO:
+    - add number on squares
+    - add list of transfers, gray out if no transfers
+    - change data for schedulePattern and calendarDayData
+    - save list of times at the end
+    - add information button
+ */
+
 import android.content.Intent
 import android.os.Bundle
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -11,6 +20,7 @@ import com.project.sharedcustodycalendar.objects.FamilyDataHolder
 import com.project.sharedcustodycalendar.utils.FirebaseUtils
 import com.project.sharedcustodycalendar.utils.CalendarUIUtils
 import com.project.sharedcustodycalendar.views.TriangleToggleCell
+import com.project.sharedcustodycalendar.objects.SchedulePattern
 
 class PatternInputActivity : AppCompatActivity() {
 
@@ -21,9 +31,7 @@ class PatternInputActivity : AppCompatActivity() {
     private lateinit var saveButton: Button
     private val cellViews = mutableListOf<TriangleToggleCell>()
 
-    private var numberOfWeeks: Int = 0
-    private val morningSchedule = MutableList(28) { 0 }  // color at start of day
-    private val eveningSchedule = MutableList(28) { 0 }  // color at end of day
+    private lateinit var pattern : SchedulePattern
 
     private var isEditMode = false
 
@@ -70,7 +78,7 @@ class PatternInputActivity : AppCompatActivity() {
 
         // 5 Generate button
         generateButton.setOnClickListener {
-            numberOfWeeks = weekCountInput.text.toString().toIntOrNull() ?: 0
+            val numberOfWeeks = weekCountInput.text.toString().toIntOrNull() ?: 0
             if (numberOfWeeks in 1..4) {
                 CalendarUIUtils.drawLegend(this@PatternInputActivity, legendLayout)
                 drawCalendarGrid()
@@ -90,7 +98,7 @@ class PatternInputActivity : AppCompatActivity() {
         val existingPattern =
             FamilyDataHolder.familyData.activeChild?.schedulePattern ?: return
 
-        numberOfWeeks = existingPattern.size / 7
+        val numberOfWeeks = existingPattern.nbOfWeeks
         weekCountInput.setText(numberOfWeeks.toString())
 
         // Copy into evening schedule (your saved source of truth)

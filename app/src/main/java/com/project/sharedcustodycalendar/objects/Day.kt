@@ -1,9 +1,8 @@
 package com.project.sharedcustodycalendar.objects
 
 import com.project.sharedcustodycalendar.model.CalendarDayData
-import com.project.sharedcustodycalendar.model.DraftTransfer
+import com.project.sharedcustodycalendar.model.DraftTransferGroup
 import com.project.sharedcustodycalendar.model.SessionContext
-import com.project.sharedcustodycalendar.model.User
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDate
@@ -83,22 +82,18 @@ class Day(
         // CASE 2: normal transfers
         val sorted = changes.sortedBy { it.time }
 
-        var current = sorted.first().fromParentID
-        startingParentID = current
 
         for (change in sorted) {
             val transfer = TransferEvent(
-                time = change.time!!,
-                fromParentID = current,
+                time = change.time,
                 toParentID = change.toParentID
             )
             transfers.add(transfer)
-            current = change.toParentID
         }
         changes.forEach { it.applied = true }
     }
 
-    fun setPendingChangedFromDraft(groupID: String, drafts: List<DraftTransfer>) {
+    fun setPendingChangedFromDraft(groupID: String, drafts: List<DraftTransferGroup.DraftTransfer>) {
         val sorted = drafts.sortedBy { it.time }
 
         val newChanges = mutableListOf<PendingChange>()
@@ -111,7 +106,6 @@ class Day(
                 date = date,
                 time = draft.time,
                 toParentID = draft.toParentID,
-                fromParentID = current,
                 proposedByParentID = user,
                 groupID = groupID
             )
@@ -130,7 +124,8 @@ class Day(
         }
     }
 
-    fun canBeModified(parentID: Int): Boolean {
+    fun canBeModified(): Boolean {
+        val parentID = SessionContext.requireCurrentParentID()
         var canBeModified = true
         for (change in pendingChanges) {
             if (!change.isProposedParent(parentID) && change.isPending()) {
@@ -168,7 +163,6 @@ class Day(
 
         return CalendarDayData(
             index = date.dayOfMonth - 1,
-            morningParentID = first.fromParentID,
             eveningParentID = last.toParentID,
             transfers = transferBool,
             changesID = groupID
@@ -178,7 +172,6 @@ class Day(
     fun getOfficialCalendarData(): CalendarDayData {
         val data = CalendarDayData(
             index = date.dayOfMonth - 1,
-            morningParentID = startingParentID,
             eveningParentID = endingParentID,
             transfers = transfers.isNotEmpty()
         )
@@ -217,5 +210,9 @@ class Day(
 
     fun cleanPendingChanges() {
         pendingChanges.removeAll { it.isAcknowledged() }
+    }
+
+    fun removePendingChanges(){
+        pendingChanges.clear()
     }
 }

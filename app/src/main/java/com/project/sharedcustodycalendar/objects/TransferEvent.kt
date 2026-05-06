@@ -7,7 +7,6 @@ import java.util.UUID
 
 data class TransferEvent(
     val time: LocalTime,
-    val fromParentID: Int,
     val toParentID: Int,
     val note: String? = null,
     var status: TransferStatus = TransferStatus.PENDING,
@@ -16,7 +15,6 @@ data class TransferEvent(
     fun toJson(): JSONObject{
         val json = JSONObject()
         json.put("time", time.toString())
-        json.put("fromParent", fromParentID)
         json.put("toParent", toParentID)
         json.putOpt("note", note)
         json.put("status", status.name)
@@ -29,7 +27,6 @@ data class TransferEvent(
 
             return TransferEvent(
                 time = LocalTime.parse(json.getString("time")),
-                fromParentID = json.getInt("fromParent"),
                 toParentID = json.getInt("toParent"),
                 status = TransferStatus.valueOf(json.getString("status")),
                 id = json.getString("id"),

@@ -3,16 +3,20 @@ package com.project.sharedcustodycalendar.views
 import android.content.Context
 import android.graphics.*
 import android.view.View
+import com.project.sharedcustodycalendar.model.CalendarDayData
+import com.project.sharedcustodycalendar.model.DraftTransfer
+import com.project.sharedcustodycalendar.model.SessionContext
 import com.project.sharedcustodycalendar.objects.FamilyDataHolder
+
+import java.time.LocalTime
 
 class TriangleToggleCell(
     context: Context,
-    private val index: Int,
-    private val morningSchedule: MutableList<Int>,
-    private val eveningSchedule: MutableList<Int>,
+    private val dayData: CalendarDayData,
     private val totalDays: Int,
-    private val cellViews: List<View> = emptyList(), // Optional, for cross-updates
-) : View(context) {
+    private val cellViews: List<View> = emptyList(), // Optional, for cross-updates.
+    private var draftTransfers: MutableList<DraftTransfer> = mutableListOf<DraftTransfer>()
+    ) : View(context) {
 
     private var showNumber = false
     private var isInCalendarActivity = false
@@ -36,22 +40,27 @@ class TriangleToggleCell(
     init {
         if (!isViewer) {
             setOnClickListener {
-                val newValue = 1 - eveningSchedule[index]
-                eveningSchedule[index] = newValue
-                if (index + 1 >= morningSchedule.size) {
-                    if (!isInCalendarActivity) {
-                        morningSchedule[(index + 1) % totalDays] = newValue
-                    }
-                } else {
-                    morningSchedule[(index + 1) % totalDays] = newValue
-                }
+                val current = dayData.eveningParentID
+                val newValue = getNextParent(current)
+                dayData.eveningParentID = newValue
 
-                invalidate()
-                cellViews.getOrNull((index + 1) % totalDays)?.invalidate()
+                val nextIndex = (dayData.index + 1) % totalDays
+                val nextCell = cellViews.getOrNull(nextIndex) as? TriangleToggleCell
+
+                nextCell?.dayData?.morningParentID = newValue
+
+                //invalidate()
+                ///cellViews.getOrNull((index + 1) % totalDays)?.invalidate()
 
                 if (isInCalendarActivity) {
-                    val activeChild = FamilyDataHolder.familyData.activeChild
-                    activeChild?.changeParentNight(year.toString(), monthId, index + 1, newValue)
+                    val activeChild = SessionContext.requireActiveChild()
+                    //TODO : create a draft transfer
+                    val draft = DraftTransfer(
+                        time = LocalTime.MIDNIGHT,
+                        toParentID = newValue
+                    )
+                    draftTransfers.add(draft)
+
                 }
             }
         }
@@ -61,17 +70,11 @@ class TriangleToggleCell(
         super.onDraw(canvas)
         val parents = FamilyDataHolder.familyData.activeChild?.parents ?: return
 
-        val morningColor = morningSchedule[index].let {
-            if (it >= 0) Color.parseColor(parents[morningSchedule[index]].color)
-            else Color.WHITE
-        }
-        val eveningColor = eveningSchedule[index].let {
-            if (it >= 0) Color.parseColor(parents[eveningSchedule[index]].color)
-            else Color.WHITE
-        }
+        val morningColor = parents[dayData.morningParentID].color
+        val eveningColor = parents[dayData.eveningParentID].color
 
-        paintTop.color = morningColor
-        paintBottom.color = eveningColor
+        paintTop.color = Color.parseColor(morningColor)
+        paintBottom.color = Color.parseColor(eveningColor)
 
         val pathTop = Path().apply {
             moveTo(0f, 0f)
@@ -92,7 +95,7 @@ class TriangleToggleCell(
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), borderPaint)
 
         if (showNumber) {
-            val day = index + 1
+            val day = dayData.index + 1
             // Draw at top‑right corner, with 8dp padding
             val padding = 8 * resources.displayMetrics.density
             val x = width - padding
@@ -131,5 +134,11 @@ class TriangleToggleCell(
 
     fun refresh() {
         invalidate()
+    }
+
+    fun getNextParent(current: Int): Int {
+        val parents = FamilyDataHolder.familyData.activeChild?.parents ?: return current
+        val index = parents.indexOfFirst { it.id == current }
+        return parents[(index + 1) % parents.size].id
     }
 }

@@ -13,7 +13,6 @@ enum class ChangeStatus {
 data class PendingChange (
     val date: LocalDate,
     val time: LocalTime,
-    val fromParentID: Int,
     val toParentID: Int,
     val proposedByParentID: Int,
     val groupID: String,
@@ -28,7 +27,6 @@ data class PendingChange (
         json.put("date", date.toString())
         json.put("time", time.toString())
         json.put("toParent", toParentID)
-        json.put("fromParent", fromParentID)
         json.put("proposedByParent", proposedByParentID)
         json.put("groupID", groupID)
         json.put("status", status.name)
@@ -47,7 +45,6 @@ data class PendingChange (
                 date = LocalDate.parse(json.getString("date")),
                 time = LocalTime.parse(json.getString("time")),
                 toParentID = json.getInt("toParent"),
-                fromParentID = json.getInt("fromParent"),
                 proposedByParentID = json.getInt("proposedByParent"),
                 groupID = json.getString("groupID"),
                 status = ChangeStatus.valueOf(json.getString("status")),

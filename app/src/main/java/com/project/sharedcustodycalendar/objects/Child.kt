@@ -18,7 +18,7 @@ data class Child(
     var childName: String = "",
     var childID: String = "",
     var parents: List<Parent> = emptyList(),
-    var schedulePattern: List<Int> = emptyList(),
+    var schedulePattern: SchedulePattern = null,
     var hour_parent_switch: String = "08:00",
     var officialCalendar : MutableMap<String, MutableList<Month>> = mutableMapOf(),
     var modifiedCalendar : MutableMap<String, MutableList<Month>> = mutableMapOf(),

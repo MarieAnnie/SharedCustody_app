@@ -1,5 +1,7 @@
 package com.project.sharedcustodycalendar.objects
 
+import com.project.sharedcustodycalendar.model.CalendarDayData
+import com.project.sharedcustodycalendar.model.DraftTransfer
 import java.time.LocalDate
 
 class Month(
@@ -8,9 +10,6 @@ class Month(
 ) {
     val nbDaysInMonth : Int = LocalDate.of(year,monthId,1).lengthOfMonth()
     val days: MutableMap<Int, Day> = mutableMapOf()
-
-    val startParentID: Int
-        get() = days[1]?.startingParentID?: UNKNOWN_PARENT
 
     companion object {
         const val UNKNOWN_PARENT = -1
@@ -35,119 +34,56 @@ class Month(
         return (1..nbDaysInMonth).all { it in days }
     }
 
+    fun addChange(groupID: String, drafts_map : Map <Int, List<DraftTransfer>>) {
+        for ((date, drafts) in drafts_map) {
+            val day = requireDay(date)
+            day.setPendingChangedFromDraft(groupID, drafts)
+        }
 
-    fun addChange(change: PendingChange) {
-        val dayOfTheMonth = change.date.dayOfMonth
-        val day = days[dayOfTheMonth]
+    }
 
-        if (day){
-            if(checkIfChangeExists(change, day)){
-                changes.add()
+    fun getModifiedCalendar() : List<CalendarDayData> {
+        val calendar = mutableListOf<CalendarDayData>()
+        for (i in 1..nbDaysInMonth) {
+            val day = requireDay(i)
+            calendar.add(day.getModifiedCalendarData())
+        }
+        return calendar
+    }
+
+    fun getOfficialCalendar(): List<CalendarDayData> {
+        val calendar = mutableListOf<CalendarDayData>()
+        for (i in 1..nbDaysInMonth){
+            val day = requireDay(i)
+            calendar.add(day.getOfficialCalendarData())
+        }
+        return calendar
+    }
+
+    fun canBeModified () : Boolean {
+        return days.values.all { it.canBeModified() }
+    }
+
+    fun applyChanges(groupID: String, dayIDs:List<Int>) {
+        for (dayInt in dayIDs) {
+            val day = requireDay(dayInt)
+            day.setTransfersFromApprovedChanges(groupID)
+        }
+    }
+
+    fun removeChangesFromDayInclusive(dayOfTheMonth: Int) {
+        for ((dayInt, day) in days) {
+            if (dayInt >= dayOfTheMonth) {
+                day.removePendingChanges()
             }
         }
+    }
 
-        if (!changes.any { it.night == change.night && it.proposedByParent == change.proposedByParent && it.status == ChangeStatus.PENDING }) {
-            changes.add(change)
+    fun requireDay(index : Int) : Day{
+        val day = days[index]
+        require(day != null) {
+            "Day $index is missing in Month($monthId $year)"
         }
-    }
-
-    fun checkIfChangeExists(change: PendingChange, day : Day) : Boolean {
-        return (day.pendingChanges.any { it.time == change.time})
-    }
-
-    fun updateParent0Nights(day: Int, newParent: Int = -1): Int {
-        if (newParent == -1) return -1
-
-        if (newParent == 0) {
-            if (!parent0_nights.contains(day)) parent0_nights.add(day)
-        } else {
-            parent0_nights.remove(day)
-        }
-
-        parent0_nights.sort()
-        return if (parent0_nights.contains(day)) 0 else 1
-    }
-
-    fun updateStartingParent(newStartingParent: Int=-1) {
-        if (newStartingParent != -1) {
-            starting_parent = newStartingParent
-        } else {
-            if (starting_parent == 0) {
-                starting_parent = 1
-            } else {
-                starting_parent = 0
-            }
-        }
-    }
-
-    fun deepCopy(): Month {
-        return Month(
-            monthId = this.monthId,
-            starting_parent = this.starting_parent,
-            parent0_nights = this.parent0_nights.toMutableList(),
-            changes = this.changes.map { it.copy() }.toMutableList()
-        )
-    }
-
-    fun hasPendingChangeFor(day: Int, parent: Int): Boolean {
-        return changes.any { it.night == day && it.proposedByParent == parent && it.isPending() }
-    }
-
-    fun resolvePendingChanges()  {
-        val result = mutableListOf<PendingChange>()
-
-        // Group all changes by night (inside a single month)
-        val grouped = changes.groupBy { it.night }
-
-        for ((_, sameNightChanges) in grouped) {
-            // If any approved, skip this night entirely (already reflected in calendar)
-            if (sameNightChanges.any { it.isApproved() }) {
-                continue
-            }
-
-            val pending = sameNightChanges.filter { it.isPending() }
-            val rejected = sameNightChanges.filter { it.isRejected()}
-
-            when {
-                pending.size >= 2 -> {
-                    // Both parents proposed same night → keep the latest
-                    val latest = pending.maxByOrNull { it.timeStamp }!!
-                    result.add(latest.copy(status = ChangeStatus.PENDING))
-                }
-                pending.size == 1 && rejected.isNotEmpty() -> {
-                    // One parent proposed, other rejected → keep the pending
-                    result.add(pending[0])
-                }
-                pending.size == 1 -> {
-                    result.add(pending[0])
-                }
-                rejected.size > 0  -> {
-                    val latest = rejected.maxByOrNull { it.timeStamp }!!
-                    result.add(latest)
-                }
-            }
-        }
-        changes = result
-    }
-
-    fun applyChanges() {
-        changes = changes.filterNot { it.isToBeDeleted() }.toMutableList()
-    }
-
-    fun applyChange(change: PendingChange){
-        var night = change.night
-        var newParent = change.newParent
-        if (newParent == 0){
-            parent0_nights.add(night)
-            parent0_nights.sort()
-        } else{
-            parent0_nights.remove(night)
-
-        }
-        change.applied = true
-    }
-
-    fun removeChangesFromDayInclusive(day: Int) {
-        changes = changes.filter { it.night < day }.toMutableList()
+        return day
     }
 }
